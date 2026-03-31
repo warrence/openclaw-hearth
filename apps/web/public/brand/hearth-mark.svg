@@ -1,0 +1,25 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="flameOuter" x1="184" y1="72" x2="338" y2="420" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFE08A"/>
+      <stop offset="0.34" stop-color="#FFB24A"/>
+      <stop offset="0.72" stop-color="#FF7B38"/>
+      <stop offset="1" stop-color="#FF5A2A"/>
+    </linearGradient>
+    <linearGradient id="flameInner" x1="225" y1="184" x2="290" y2="356" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF2BE"/>
+      <stop offset="0.4" stop-color="#FFD66E"/>
+      <stop offset="1" stop-color="#FF9B44"/>
+    </linearGradient>
+    <filter id="flameGlow" x="120" y="24" width="272" height="464" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+      <feGaussianBlur stdDeviation="12" result="effect1_foregroundBlur"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#flameGlow)">
+    <path d="M258.4 55.6C278.3 104.8 314.7 136.1 339.1 176.8C352.7 199.6 360 223.4 360 248.3C360 324.8 307 388 256 446.4C205 388 152 324.8 152 248.3C152 183.9 192.8 138.3 231.9 96.6C239.1 127.8 243.5 150.7 257.2 176C273.9 151.2 283.3 121.4 258.4 55.6Z" fill="url(#flameOuter)"/>
+    <path d="M257.1 170.3C273.2 196.1 305 221.4 305 266C305 303.3 285.5 335.9 256 371.1C226.5 335.9 207 303.3 207 266C207 230.7 228.7 203.6 248.9 179.1C252.6 195.2 254.8 207 261.9 220C270.6 207.3 275.5 191.9 257.1 170.3Z" fill="url(#flameInner)"/>
+  </g>
+</svg>

@@ -1,0 +1,48 @@
+[
+    {
+        "id": 1,
+        "user_id": 1,
+        "title": "Tokyo itinerary ideas",
+        "agent_id": "aeris",
+        "openclaw_session_key": "app:alex:conv:tokyo-itinerary",
+        "status": "active",
+        "archived_at": null,
+        "last_message_at": "2026-03-23T01:00:00.000000Z",
+        "created_at": "2026-03-23T02:17:52.000000Z",
+        "updated_at": "2026-03-23T02:17:52.000000Z",
+        "model_preset": "auto",
+        "mode": "private",
+        "messages_count": 0,
+        "search_match": {
+            "matched_fields": [
+                "title"
+            ],
+            "preview": "Tokyo itinerary ideas",
+            "message_id": null,
+            "message_created_at": null
+        }
+    },
+    {
+        "id": 2,
+        "user_id": 1,
+        "title": "Weekend planning",
+        "agent_id": "aeris",
+        "openclaw_session_key": "app:alex:conv:weekend-planning",
+        "status": "archived",
+        "archived_at": "2026-03-22T00:00:00.000000Z",
+        "last_message_at": "2026-03-22T00:10:00.000000Z",
+        "created_at": "2026-03-23T02:17:52.000000Z",
+        "updated_at": "2026-03-23T02:17:52.000000Z",
+        "model_preset": "deep",
+        "mode": "private",
+        "messages_count": 1,
+        "search_match": {
+            "matched_fields": [
+                "message"
+            ],
+            "preview": "Can you help me compare Tokyo and Kyoto neighborhoods?",
+            "message_id": 1,
+            "message_created_at": "2026-03-23T02:17:52.000000Z"
+        }
+    }
+]

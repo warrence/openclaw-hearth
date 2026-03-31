@@ -1,0 +1,155 @@
+html,
+body,
+#q-app {
+  min-height: 100%;
+}
+
+body {
+  color: var(--hearth-text);
+  background: #151311;
+}
+
+body.body--dark {
+  background: #151311;
+  color: var(--hearth-text);
+}
+
+:root {
+  --hearth-bg: #0d0d0d;
+  --hearth-surface: #1a1a1a;
+  --hearth-surface-elevated: #242424;
+  --hearth-surface-soft: #2a2a2a;
+  --hearth-primary: #6d5dfc;
+  --hearth-primary-strong: #2563eb;
+  --hearth-secondary: #808080;
+  --hearth-text: #ececec;
+  --hearth-text-muted: #999999;
+  --hearth-border: rgba(255, 255, 255, 0.1);
+  --hearth-danger: #e06050;
+}
+
+body,
+button,
+input,
+textarea {
+  font-family: Inter, Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+.q-page {
+  color: var(--hearth-text);
+}
+
+.q-field--outlined .q-field__control,
+.q-field--borderless .q-field__control {
+  border-radius: 18px;
+}
+
+.q-dialog__inner > div,
+.q-menu,
+.q-card {
+  border-radius: 22px;
+}
+
+.q-dialog__backdrop {
+  background: rgba(2, 6, 23, 0.72);
+}
+
+.q-menu.chat-actions-menu,
+.model-select-menu {
+  background: var(--q-dark) !important;
+  color: var(--hearth-text) !important;
+  border: 1px solid var(--hearth-border);
+  border-radius: 16px;
+  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.42);
+  overflow: hidden;
+}
+
+.q-menu.chat-actions-menu .q-list {
+  background: transparent !important;
+  color: inherit !important;
+  padding: 10px;
+}
+
+.q-menu.chat-actions-menu .q-item {
+  min-height: 48px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: var(--hearth-text) !important;
+}
+
+.q-menu.chat-actions-menu .q-item__section--avatar {
+  min-width: 36px;
+}
+
+.q-menu.chat-actions-menu .q-item__label,
+.q-menu.chat-actions-menu .q-item__section,
+.q-menu.chat-actions-menu .q-icon {
+  color: inherit !important;
+  font-size: 0.95rem;
+}
+
+.q-menu.chat-actions-menu .q-item.text-negative,
+.q-menu.chat-actions-menu .text-negative {
+  color: var(--hearth-danger) !important;
+}
+
+.model-select-menu .q-item {
+  min-height: 46px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  color: var(--hearth-text);
+  font-size: 0.94rem;
+}
+
+.model-select-menu .q-item.q-item--active {
+  background: rgba(124, 58, 237, 0.15);
+  color: var(--hearth-text);
+}
+
+// highlight.js theme — atom-one-dark, readable on dark backgrounds
+@import 'highlight.js/styles/atom-one-dark.css';
+
+// Dark scrollbars — match dark theme
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.15) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+// All primary buttons use purple-blue gradient
+.q-btn--unelevated.bg-primary {
+  background: linear-gradient(135deg, #7c3aed, #2563eb) !important;
+  color: #fff !important;
+}
+
+// Spinner uses primary purple
+.q-spinner {
+  color: #7c3aed !important;
+}
+
+.q-loading-bar {
+  background: linear-gradient(90deg, #7c3aed, #2563eb) !important;
+}

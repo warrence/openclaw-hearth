@@ -1,0 +1,31 @@
+{
+    "status": "online",
+    "base_url": "http://127.0.0.1:18789",
+    "last_checked_at": "2026-03-23T10:17:52+00:00",
+    "last_error": null,
+    "agents": [
+        {
+            "id": "daughter-aeris",
+            "name": "Aeris",
+            "status": "default"
+        }
+    ],
+    "default_agent_id": "daughter-aeris",
+    "default_model": "openai-codex/gpt-5.4",
+    "raw": {
+        "defaultAgentId": "daughter-aeris",
+        "agents": [
+            {
+                "agentId": "daughter-aeris",
+                "name": "Aeris",
+                "sessions": {
+                    "recent": [
+                        {
+                            "model": "openai-codex/gpt-5.4"
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}

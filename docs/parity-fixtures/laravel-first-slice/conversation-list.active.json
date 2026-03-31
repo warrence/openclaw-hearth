@@ -1,0 +1,32 @@
+[
+    {
+        "id": 3,
+        "user_id": 1,
+        "title": "Meal planning",
+        "agent_id": "aeris",
+        "openclaw_session_key": "app:alex:conv:meal-planning",
+        "status": "active",
+        "archived_at": null,
+        "last_message_at": "2026-03-23T02:00:01.000000Z",
+        "created_at": "2026-03-23T02:17:52.000000Z",
+        "updated_at": "2026-03-23T02:17:52.000000Z",
+        "model_preset": "fast",
+        "mode": "private",
+        "messages_count": 2
+    },
+    {
+        "id": 1,
+        "user_id": 1,
+        "title": "Tokyo itinerary ideas",
+        "agent_id": "aeris",
+        "openclaw_session_key": "app:alex:conv:tokyo-itinerary",
+        "status": "active",
+        "archived_at": null,
+        "last_message_at": "2026-03-23T01:00:00.000000Z",
+        "created_at": "2026-03-23T02:17:52.000000Z",
+        "updated_at": "2026-03-23T02:17:52.000000Z",
+        "model_preset": "auto",
+        "mode": "private",
+        "messages_count": 0
+    }
+]

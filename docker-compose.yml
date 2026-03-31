@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: hearth
+      POSTGRES_USER: hearth
+      POSTGRES_PASSWORD: hearth
+    ports:
+      - "5432:5432"
+    volumes:
+      - hearth_postgres_data:/var/lib/postgresql/data
+      - ./packages/hearth-cli/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hearth -d hearth"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+  api:
+    build:
+      context: ./apps/api-nest
+      dockerfile: Dockerfile
+    env_file:
+      - ./apps/api-nest/.env
+    environment:
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_NAME: hearth
+      DATABASE_USER: hearth
+      DATABASE_PASSWORD: hearth
+    ports:
+      - "3001:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    ports:
+      - "9100:80"
+    depends_on:
+      - api
+
+volumes:
+  hearth_postgres_data:

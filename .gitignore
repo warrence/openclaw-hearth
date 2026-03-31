@@ -1,0 +1,102 @@
+# Dependencies
+node_modules/
+.DS_Store
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+*.crt
+*.key
+
+# Build outputs (rebuild locally)
+apps/api-nest/dist/
+apps/web/dist/
+packages/openclaw-plugin-hearth-app/dist/
+packages/hearth-cli/dist/
+
+# Agent workspace (private)
+AGENTS.md
+IDENTITY.md
+MEMORY.md
+USER.md
+HEARTBEAT.md
+CURRENT-STATE.md
+MISSION.md
+ROLE.md
+WORKFLOW.md
+SOUL.md
+BOOTSTRAP.md
+mission-control.md
+backlog.md
+roadmap-wave-notes.md
+team-charter.md
+notes-next-wave.md
+memory/
+.learnings/
+.openclaw/
+skills/
+
+# Internal planning docs (private)
+handoff-notes.md
+forge-profile.md
+migration-laravel-to-nest.md
+migration-plan.md
+frontend-cleanup-earthy-theme-plan.md
+app-channel-message-contract.md
+native-channel-phase-b-spec.md
+wave-1-auth-owner-management-plan.md
+wave-1-auth-owner-management-spec.md
+memory-architecture.md
+
+# Temp files
+tmp/
+.tmp/
+.tmp-*
+.git.workspace-backup
+
+# Infrastructure (personal)
+launchd/
+designs/
+
+# Package manager
+package.json
+package-lock.json
+
+# Apps build/env
+apps/api-nest/dist/
+apps/api-nest/.env
+apps/api-nest/storage/
+apps/web/dist/
+apps/web/.env
+apps/web/.quasar/
+apps/api/.env
+
+# Lock files (users regenerate)
+apps/api-nest/package-lock.json
+apps/web/package-lock.json
+packages/openclaw-plugin-hearth-app/package-lock.json
+packages/hearth-cli/package-lock.json
+
+# Cleanup leftovers
+.gitignore-public
+README-public.md
+TOOLS.md
+
+# Internal migration docs
+docs/nest-message-send-stream-migration-plan.md
+docs/nestjs-migration-blueprint.md
+docs/nestjs-migration-first-slice.md
+docs/web-conversation-write-migration-plan.md
+docs/privacy-policy-modes-spec.md
+
+# Apps submodule leftovers
+apps/.gitignore
+apps/README.md
+apps/packages/
+
+# Laravel app (removed — fully migrated to NestJS)
+apps/api/
+
+# Web env files
+apps/web/.env.production

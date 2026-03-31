@@ -1,0 +1,30 @@
+{
+    "id": 3,
+    "user_id": 1,
+    "title": "Meal planning",
+    "agent_id": "aeris",
+    "openclaw_session_key": "app:alex:conv:meal-planning",
+    "status": "active",
+    "archived_at": null,
+    "last_message_at": "2026-03-23T02:00:01.000000Z",
+    "created_at": "2026-03-23T02:17:52.000000Z",
+    "updated_at": "2026-03-23T02:17:52.000000Z",
+    "model_preset": "fast",
+    "mode": "private",
+    "user": {
+        "id": 1,
+        "name": "Alex",
+        "slug": "alex",
+        "avatar": null,
+        "memory_namespace": "person:alex",
+        "default_agent_id": "daughter-aeris",
+        "is_active": true,
+        "created_at": "2026-03-23T02:17:52.000000Z",
+        "updated_at": "2026-03-23T02:17:52.000000Z",
+        "role": "owner",
+        "pin_set_at": null,
+        "last_login_at": null,
+        "requires_pin": true,
+        "has_pin": false
+    }
+}

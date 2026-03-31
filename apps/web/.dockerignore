@@ -1,0 +1,9 @@
+.env
+.git
+.gitignore
+.idea
+.quasar
+dist
+node_modules
+coverage
+*.log

@@ -1,0 +1,91 @@
+[
+    {
+        "id": 2,
+        "conversation_id": 3,
+        "role": "user",
+        "content": "Can you help me plan meals for next week?",
+        "model": null,
+        "metadata_json": {
+            "person_identity": "person:alex",
+            "openclaw_session_key": "agent:daughter-aeris:person:alex:app:alex:conv:meal-planning",
+            "attachments": []
+        },
+        "source": "app",
+        "created_at": "2026-03-23T02:17:52.000000Z",
+        "updated_at": "2026-03-23T02:17:52.000000Z",
+        "channel": "app",
+        "contract_event": "message.inbound",
+        "channel_message_id": "msg_fixture_1",
+        "person_identity": "person:alex",
+        "agent_id": "daughter-aeris",
+        "reply_to_message_id": null,
+        "sent_at": "2026-03-23T02:00:00.000000Z",
+        "contract_json": {
+            "channel": "app",
+            "channelMessageId": "msg_fixture_1",
+            "conversationId": "app:alex:conv:meal-planning",
+            "personIdentity": "person:alex",
+            "profile": {
+                "name": "Alex",
+                "slug": "alex"
+            },
+            "agentId": "daughter-aeris",
+            "role": "user",
+            "text": "Can you help me plan meals for next week?",
+            "attachments": [],
+            "sentAt": "2026-03-23T10:00:00Z",
+            "metadata": {
+                "source": "openclaw-family-app",
+                "uiConversationId": 3,
+                "openclawSessionKey": "agent:daughter-aeris:person:alex:app:alex:conv:meal-planning",
+                "transportMode": "bridge-compatible-app-channel"
+            }
+        }
+    },
+    {
+        "id": 3,
+        "conversation_id": 3,
+        "role": "assistant",
+        "content": "Absolutely \u2014 here is a simple meal plan.",
+        "model": "openai-codex/gpt-5.4",
+        "metadata_json": {
+            "person_identity": "person:alex",
+            "openclaw_session_key": "agent:daughter-aeris:person:alex:app:alex:conv:meal-planning",
+            "openclaw_session_id": "sess-fixture-1",
+            "usage": {
+                "total": 99
+            },
+            "transport": "bridge-compatible-app-channel"
+        },
+        "source": "openclaw",
+        "created_at": "2026-03-23T02:17:52.000000Z",
+        "updated_at": "2026-03-23T02:17:52.000000Z",
+        "channel": "app",
+        "contract_event": "message.outbound",
+        "channel_message_id": "asst_fixture_1",
+        "person_identity": "person:alex",
+        "agent_id": "daughter-aeris",
+        "reply_to_message_id": "msg_fixture_1",
+        "sent_at": "2026-03-23T02:00:01.000000Z",
+        "contract_json": {
+            "channel": "app",
+            "conversationId": "app:alex:conv:meal-planning",
+            "personIdentity": "person:alex",
+            "agentId": "daughter-aeris",
+            "role": "assistant",
+            "text": "Absolutely \u2014 here is a simple meal plan.",
+            "messageId": "asst_fixture_1",
+            "replyToMessageId": "msg_fixture_1",
+            "completed": true,
+            "sentAt": "2026-03-23T10:00:01Z",
+            "metadata": {
+                "model": "openai-codex/gpt-5.4",
+                "openclawSessionId": "sess-fixture-1",
+                "usage": {
+                    "total": 99
+                },
+                "transportMode": "bridge-compatible-app-channel"
+            }
+        }
+    }
+]
