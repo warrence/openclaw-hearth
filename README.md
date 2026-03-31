@@ -16,7 +16,7 @@
 
 ## Demo
 
-<video src="https://github.com/warrence/openclaw-hearth/raw/main/apps/web/public/brand/hearth-demo.mp4" width="300" autoplay loop muted playsinline></video>
+https://github.com/warrence/openclaw-hearth/raw/main/apps/web/public/brand/hearth-demo.mp4
 
 ## Why Hearth?
 
