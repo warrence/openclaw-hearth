@@ -60,11 +60,12 @@ export async function installDependencies(): Promise<void> {
   }
 
   // Build plugin if dist doesn't exist
-  const pluginDist = path.join(root, 'packages', 'openclaw-plugin-hearth-app', 'dist');
+  const pluginDir = path.join(root, 'packages', 'openclaw-plugin-hearth-app');
+  const pluginDist = path.join(pluginDir, 'dist');
   if (!fs.existsSync(pluginDist)) {
     console.log('  → Plugin: building...');
     try {
-      execSync('npm run build', { cwd: path.join(root, 'packages', 'openclaw-plugin-hearth-app'), stdio: 'pipe', timeout: 60000 });
+      execSync('npm run build', { cwd: pluginDir, stdio: 'pipe', timeout: 60000 });
       console.log('  ✓ Plugin: built');
     } catch {
       console.error('  ✗ Plugin build failed');
@@ -72,6 +73,60 @@ export async function installDependencies(): Promise<void> {
     }
   }
 
+  // Install plugin into OpenClaw if openclaw CLI is available
+  try {
+    const openclawBin = execSync('which openclaw', { encoding: 'utf8', timeout: 5000 }).trim();
+    if (openclawBin) {
+      console.log('  → Installing Hearth plugin into OpenClaw...');
+      try {
+        execSync(`openclaw plugins install "${pluginDir}"`, { stdio: 'pipe', timeout: 30000 });
+        console.log('  ✓ Hearth plugin installed in OpenClaw');
+      } catch {
+        console.log('  ⚠ Plugin install into OpenClaw failed — you may need to run manually:');
+        console.log(`    openclaw plugins install ${pluginDir}`);
+      }
+    }
+  } catch {
+    // openclaw not found yet — will be handled in openclaw setup step
+  }
+
+  console.log('');
+}
+
+export async function installPlugin(): Promise<void> {
+  const root = findProjectRoot();
+  const pluginDir = path.join(root, 'packages', 'openclaw-plugin-hearth-app');
+
+  try {
+    const openclawBin = execSync('which openclaw', { encoding: 'utf8', timeout: 5000 }).trim();
+    if (!openclawBin) return;
+
+    // Check if already installed
+    try {
+      const plugins = execSync('openclaw plugins list 2>/dev/null', { encoding: 'utf8', timeout: 10000 });
+      if (plugins.includes('hearth-app')) {
+        console.log('  ✓ Hearth plugin already installed in OpenClaw');
+        return;
+      }
+    } catch {
+      // plugins list failed — try installing anyway
+    }
+
+    console.log('  🔌 Installing Hearth plugin into OpenClaw...');
+    execSync(`openclaw plugins install "${pluginDir}"`, { stdio: 'pipe', timeout: 30000 });
+    console.log('  ✓ Hearth plugin installed');
+
+    // Restart gateway to load the plugin
+    try {
+      execSync('openclaw gateway restart', { stdio: 'pipe', timeout: 15000 });
+      console.log('  ✓ OpenClaw gateway restarted');
+    } catch {
+      console.log('  ⚠ Could not restart gateway — restart OpenClaw manually to load the plugin');
+    }
+  } catch {
+    console.log('  ⚠ OpenClaw not found — install the plugin manually after installing OpenClaw:');
+    console.log(`    openclaw plugins install ${pluginDir}`);
+  }
   console.log('');
 }
 
