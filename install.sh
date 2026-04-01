@@ -258,17 +258,29 @@ install_postgres_docker() {
     debug "downloading Docker install script..."
     curl -fsSL https://get.docker.com | sh
     debug "Docker install finished"
-    # Start Docker service
+    # Start Docker service and add user to docker group
     if has systemctl; then
       sudo systemctl enable docker 2>/dev/null || true
       sudo systemctl start docker 2>/dev/null || true
     fi
+    # Add current user to docker group so they can run without sudo
+    sudo usermod -aG docker "$USER" 2>/dev/null || true
+    # Apply group change for this session
+    sg docker -c "true" 2>/dev/null || newgrp docker 2>/dev/null || true
     has docker || fail "Docker installation failed. Install manually: https://docs.docker.com/get-docker/"
     info "Docker installed"
   fi
 
+  # If docker still needs sudo, use sudo for container commands
+  if ! docker info &>/dev/null; then
+    debug "docker requires sudo — using sudo for container"
+    DOCKER_CMD="sudo docker"
+  else
+    DOCKER_CMD="docker"
+  fi
+
   warn "Starting PostgreSQL in Docker..."
-  docker run -d --name hearth-db \
+  $DOCKER_CMD run -d --name hearth-db \
     -e POSTGRES_DB=hearth \
     -e POSTGRES_USER=hearth \
     -e POSTGRES_PASSWORD=hearth \
@@ -276,11 +288,11 @@ install_postgres_docker() {
     --restart unless-stopped \
     "postgres:${PG_VERSION}-alpine" || {
       # Container might already exist
-      docker start hearth-db 2>/dev/null || fail "Failed to start PostgreSQL container"
+      $DOCKER_CMD start hearth-db 2>/dev/null || fail "Failed to start PostgreSQL container"
     }
-  sleep 3
+  sleep 5
 
-  if docker exec hearth-db pg_isready -U hearth -d hearth &>/dev/null; then
+  if $DOCKER_CMD exec hearth-db pg_isready -U hearth -d hearth &>/dev/null; then
     info "PostgreSQL running in Docker (port 5432)"
   else
     fail "PostgreSQL container failed to start"
