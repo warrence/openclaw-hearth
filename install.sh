@@ -88,8 +88,20 @@ ensure_git() {
   warn "Installing git..."
   case "$OS" in
     macos)  xcode-select --install 2>/dev/null || brew install git ;;
-    debian) sudo apt-get update -qq && sudo apt-get install -yqq git ;;
-    redhat) sudo dnf install -y git ;;
+    debian)
+      if has sudo; then
+        sudo apt-get update -qq && sudo apt-get install -yqq git
+      else
+        apt-get update -qq && apt-get install -yqq git
+      fi
+      ;;
+    redhat)
+      if has sudo; then
+        sudo dnf install -y git
+      else
+        dnf install -y git
+      fi
+      ;;
     *)      fail "Please install git manually" ;;
   esac
   has git || fail "git installation failed"
@@ -190,18 +202,29 @@ install_postgres_local() {
       ;;
     debian)
       warn "Installing PostgreSQL..."
-      sudo apt-get update -qq
-      sudo apt-get install -yqq postgresql postgresql-contrib
-      sudo systemctl enable postgresql
-      sudo systemctl start postgresql
+      if has sudo; then
+        sudo apt-get update -qq
+        sudo apt-get install -yqq postgresql postgresql-contrib
+        sudo systemctl enable postgresql 2>/dev/null || true
+        sudo systemctl start postgresql 2>/dev/null || true
+      else
+        apt-get update -qq
+        apt-get install -yqq postgresql postgresql-contrib
+        pg_ctlcluster "$PG_VERSION" main start 2>/dev/null || true
+      fi
       sleep 2
       ;;
     redhat)
       warn "Installing PostgreSQL..."
-      sudo dnf install -y postgresql-server postgresql-contrib
-      sudo postgresql-setup --initdb 2>/dev/null || true
-      sudo systemctl enable postgresql
-      sudo systemctl start postgresql
+      if has sudo; then
+        sudo dnf install -y postgresql-server postgresql-contrib
+        sudo postgresql-setup --initdb 2>/dev/null || true
+        sudo systemctl enable postgresql
+        sudo systemctl start postgresql
+      else
+        dnf install -y postgresql-server postgresql-contrib
+        postgresql-setup --initdb 2>/dev/null || true
+      fi
       sleep 2
       ;;
     *)
@@ -245,10 +268,14 @@ create_hearth_database() {
     createuser hearth 2>/dev/null || true
     createdb -O hearth hearth 2>/dev/null || true
     psql -d hearth -c "ALTER USER hearth WITH PASSWORD 'hearth';" 2>/dev/null || true
-  else
+  elif has sudo; then
     sudo -u postgres createuser hearth 2>/dev/null || true
     sudo -u postgres createdb -O hearth hearth 2>/dev/null || true
     sudo -u postgres psql -c "ALTER USER hearth WITH PASSWORD 'hearth';" 2>/dev/null || true
+  else
+    su - postgres -c "createuser hearth" 2>/dev/null || true
+    su - postgres -c "createdb -O hearth hearth" 2>/dev/null || true
+    su - postgres -c "psql -c \"ALTER USER hearth WITH PASSWORD 'hearth';\"" 2>/dev/null || true
   fi
   info "Database 'hearth' ready"
 }
