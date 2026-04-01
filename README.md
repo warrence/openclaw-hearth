@@ -226,9 +226,17 @@ Hearth is designed with household privacy in mind:
 - **No telemetry** — no data sent to third parties
 - **PIN + WebAuthn** — local authentication with optional biometrics
 
-## Memory
+## Enhance Your Assistant
 
-Hearth supports long-term memory so your assistant grows smarter over time. Built-in memory works out of the box — for enhanced semantic memory with Mem0, see the **[Memory Setup Guide](docs/memory-setup.md)**.
+Once Hearth is running, you can add more capabilities:
+
+- 🔍 **Web search** — let your assistant look things up online
+- 🎨 **Image generation** — create and edit images
+- 🗣️ **Text-to-speech** — read messages aloud
+- 🧠 **Long-term memory** — remember things across conversations
+- 📚 **Skills** — self-improvement, weather, and more
+
+See the **[Enhancement Guide](docs/enhance-your-assistant.md)** for step-by-step setup.
 
 ## Roadmap
 

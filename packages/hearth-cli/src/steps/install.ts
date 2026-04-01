@@ -130,50 +130,6 @@ export async function installPlugin(): Promise<void> {
   console.log('');
 }
 
-export async function installRecommendedSkills(): Promise<void> {
-  console.log('📚  Installing recommended skills');
-  console.log('');
-
-  try {
-    const openclawBin = execSync('which openclaw', { encoding: 'utf8', timeout: 5000 }).trim();
-    if (!openclawBin) {
-      console.log('  ⚠ OpenClaw not found — skip skill installation');
-      console.log('');
-      return;
-    }
-
-    const skills = [
-      { name: 'self-improvement', desc: 'learns from mistakes over time', pkg: 'clawhub install self-improving-agent' },
-      { name: 'weather', desc: 'weather forecasts', pkg: 'clawhub install weather' },
-    ];
-
-    for (const skill of skills) {
-      try {
-        // Check if already installed
-        const list = execSync('openclaw skills list 2>/dev/null', { encoding: 'utf8', timeout: 10000 });
-        if (list.includes(skill.name)) {
-          console.log(`  ✓ ${skill.name} — already installed`);
-          continue;
-        }
-      } catch {
-        // skills list failed — try installing anyway
-      }
-
-      console.log(`  → ${skill.name} — ${skill.desc}...`);
-      try {
-        execSync(skill.pkg, { stdio: 'pipe', timeout: 30000 });
-        console.log(`  ✓ ${skill.name} installed`);
-      } catch {
-        console.log(`  ⚠ ${skill.name} — install failed (install manually later: ${skill.pkg})`);
-      }
-    }
-  } catch {
-    console.log('  ⚠ Could not install skills — install manually later');
-  }
-
-  console.log('');
-}
-
 export async function buildWebApp(): Promise<void> {
   console.log('🔨  Step 7/7: Building web app');
   console.log('');

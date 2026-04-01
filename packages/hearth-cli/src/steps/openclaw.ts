@@ -71,15 +71,22 @@ export async function setupOpenClaw(): Promise<OpenClawConfig> {
         process.exit(1);
       }
 
-      // Run openclaw setup automatically
-      console.log('  → Running OpenClaw initial setup...');
+      // Run openclaw setup — this handles model selection, provider auth (OAuth), API keys
+      console.log('');
+      console.log('  → Running OpenClaw setup...');
+      console.log('  This will configure your AI model and provider authentication.');
+      console.log('  Follow the prompts from OpenClaw:');
+      console.log('');
       try {
-        execSync('openclaw setup --non-interactive 2>/dev/null || openclaw setup 2>/dev/null || true', {
+        execSync('openclaw setup', {
           stdio: 'inherit',
-          timeout: 30000,
+          timeout: 300000, // 5 min — user may need to do OAuth in browser
         });
+        console.log('');
+        console.log('  ✓ OpenClaw configured');
       } catch {
-        console.log('  ⚠ OpenClaw setup may need manual configuration later');
+        console.log('');
+        console.log('  ⚠ OpenClaw setup incomplete — you can run "openclaw setup" later to finish');
       }
 
       // Re-detect after install
