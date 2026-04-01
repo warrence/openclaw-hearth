@@ -15,8 +15,8 @@ PG_VERSION="16"
 # Try to redirect from /dev/tty for interactive prompts.
 INTERACTIVE=true
 if [ ! -t 0 ]; then
-  if [ -e /dev/tty ]; then
-    exec < /dev/tty
+  if exec < /dev/tty 2>/dev/null; then
+    INTERACTIVE=true
   else
     INTERACTIVE=false
   fi
@@ -115,7 +115,7 @@ ensure_node() {
     export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
     if [ ! -s "$NVM_DIR/nvm.sh" ]; then
       warn "Installing nvm..."
-      curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+      curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | PROFILE=/dev/null bash
     fi
   fi
 
@@ -123,9 +123,9 @@ ensure_node() {
   # shellcheck disable=SC1091
   [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
-  warn "Installing Node.js ${NODE_VERSION}..."
-  nvm install "$NODE_VERSION"
-  nvm use "$NODE_VERSION"
+  warn "Installing Node.js ${NODE_VERSION} (this may take a minute)..."
+  nvm install "$NODE_VERSION" || fail "Node.js installation failed"
+  nvm use "$NODE_VERSION" || true
 
   has node || fail "Node.js installation failed"
   info "Node.js $(node -v) installed"
