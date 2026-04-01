@@ -162,8 +162,8 @@ function detectOpenClaw(): { baseUrl: string; token: string } | null {
       const host = config.gateway?.host ?? '127.0.0.1';
       const baseUrl = `http://${host}:${port}`;
 
-      // Try to find the token from agent configs or gateway config
-      const token = config.gateway?.token ?? config.auth?.token ?? '';
+      // Try to find the token from gateway auth config
+      const token = config.gateway?.auth?.token ?? config.gateway?.token ?? config.auth?.token ?? '';
 
       return { baseUrl, token };
     } catch {
