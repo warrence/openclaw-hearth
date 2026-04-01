@@ -114,7 +114,7 @@ Each household member gets their own profile with PIN authentication. Conversati
 ### Setup
 
 ```bash
-git clone https://github.com/user/hearth.git
+git clone https://github.com/warrence/openclaw-hearth.git
 cd hearth
 npx hearth setup
 ```
@@ -139,7 +139,7 @@ Open `http://localhost:9100` in your browser.
 ### Docker
 
 ```bash
-git clone https://github.com/user/hearth.git
+git clone https://github.com/warrence/openclaw-hearth.git
 cd hearth
 docker compose up
 ```
@@ -251,7 +251,7 @@ This isn't a corporation. It's a family project that grew into something we thin
 ---
 
 <p align="center">
-  Built with 🏠 by <a href="https://github.com/user">Warrence</a>
+  Built with 🏠 by <a href="https://github.com/warrence">Warrence</a>
   <br/>
   Powered by <a href="https://github.com/openclaw/openclaw">OpenClaw</a>
 </p>
