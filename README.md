@@ -109,7 +109,7 @@ Each household member gets their own profile with PIN authentication. Conversati
 ### One-Line Install (macOS / Linux)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/warrence/openclaw-hearth/main/install.sh | bash
+bash <(curl -fsSL https://raw.githubusercontent.com/warrence/openclaw-hearth/main/install.sh)
 ```
 
 This automatically detects and installs everything you need:

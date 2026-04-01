@@ -11,11 +11,11 @@ HEARTH_DIR="${HEARTH_DIR:-$HOME/hearth}"
 NODE_VERSION="22"
 PG_VERSION="16"
 
-# When piped via curl | bash, stdin is the pipe not the terminal.
-# Try to redirect from /dev/tty for interactive prompts.
+# Detect interactive mode.
+# When piped (curl | bash), stdin is consumed. We try /dev/tty as fallback.
 INTERACTIVE=true
 if [ ! -t 0 ]; then
-  if exec < /dev/tty 2>/dev/null; then
+  if [ -c /dev/tty ] && exec < /dev/tty 2>/dev/null && [ -t 0 ]; then
     INTERACTIVE=true
   else
     INTERACTIVE=false
