@@ -1,6 +1,28 @@
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
+
+function findOpenClawBin(): string | null {
+  try {
+    return execSync('which openclaw', { encoding: 'utf8', timeout: 5000 }).trim() || null;
+  } catch { /* not in PATH */ }
+
+  const nvmDir = process.env.NVM_DIR || path.join(os.homedir(), '.nvm');
+  try {
+    const nodeVersion = execSync('node -v', { encoding: 'utf8', timeout: 5000 }).trim();
+    const bin = path.join(nvmDir, 'versions', 'node', nodeVersion, 'bin', 'openclaw');
+    if (fs.existsSync(bin)) return bin;
+  } catch { /* ignore */ }
+
+  try {
+    const prefix = execSync('npm prefix -g', { encoding: 'utf8', timeout: 5000 }).trim();
+    const bin = path.join(prefix, 'bin', 'openclaw');
+    if (fs.existsSync(bin)) return bin;
+  } catch { /* ignore */ }
+
+  return null;
+}
 
 function findProjectRoot(): string {
   let dir = process.cwd();
@@ -34,6 +56,42 @@ export async function runStart(opts: { port: string; apiPort: string }): Promise
   console.log('');
   console.log('🏠  Starting Hearth');
   console.log('─'.repeat(40));
+
+  // Start OpenClaw gateway if not running
+  try {
+    const healthRes = await fetch(`http://127.0.0.1:18789/health`).catch(() => null);
+    if (!healthRes?.ok) {
+      console.log('  → Starting OpenClaw gateway...');
+      // Try systemd first, fall back to foreground
+      try {
+        const { execSync } = require('child_process');
+        execSync('openclaw gateway start 2>/dev/null', { timeout: 5000 });
+      } catch {
+        // No systemd — run in foreground (background process)
+        const openclawBin = findOpenClawBin();
+        if (openclawBin) {
+          const gw = spawn(openclawBin, ['gateway'], {
+            stdio: ['ignore', 'pipe', 'pipe'],
+            detached: true,
+          });
+          gw.unref();
+          await new Promise((resolve) => setTimeout(resolve, 3000));
+          const check = await fetch('http://127.0.0.1:18789/health').catch(() => null);
+          if (check?.ok) {
+            console.log('  ✓ OpenClaw gateway started');
+          } else {
+            console.log('  ⚠ OpenClaw gateway may not be ready — check with: openclaw gateway status');
+          }
+        } else {
+          console.log('  ⚠ OpenClaw not found — start it manually: openclaw gateway');
+        }
+      }
+    } else {
+      console.log('  ✓ OpenClaw gateway already running');
+    }
+  } catch {
+    console.log('  ⚠ Could not check OpenClaw — start it manually if needed');
+  }
 
   // Start API
   console.log(`  → API starting on port ${opts.apiPort}...`);
