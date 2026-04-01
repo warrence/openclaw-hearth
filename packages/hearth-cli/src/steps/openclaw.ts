@@ -92,6 +92,10 @@ export async function setupOpenClaw(): Promise<OpenClawConfig> {
       // Re-detect after install
       const freshDetected = detectOpenClaw();
       if (freshDetected) {
+        // Ensure gateway token exists
+        if (!freshDetected.token) {
+          freshDetected.token = ensureGatewayToken();
+        }
         const agents = await fetchAgents(freshDetected.baseUrl, freshDetected.token);
         console.log(`  ✓ OpenClaw configured at ${freshDetected.baseUrl}`);
         console.log('');
@@ -105,6 +109,16 @@ export async function setupOpenClaw(): Promise<OpenClawConfig> {
       console.log('  You can install it later with: npm install -g openclaw');
       console.log('');
     }
+  }
+
+  // If we got here via detected config but no token, ensure one
+  const detectedAgain = detectOpenClaw();
+  if (detectedAgain && !detectedAgain.token) {
+    detectedAgain.token = ensureGatewayToken();
+    const agents = await fetchAgents(detectedAgain.baseUrl, detectedAgain.token);
+    console.log(`  ✓ OpenClaw configured at ${detectedAgain.baseUrl}`);
+    console.log('');
+    return { ...detectedAgain, agents };
   }
 
   // Manual configuration
@@ -143,6 +157,36 @@ export async function setupOpenClaw(): Promise<OpenClawConfig> {
     token: answers.token,
     agents,
   };
+}
+
+function ensureGatewayToken(): string {
+  const configPath = path.join(os.homedir(), '.openclaw', 'openclaw.json');
+  try {
+    const config = fs.existsSync(configPath)
+      ? JSON.parse(fs.readFileSync(configPath, 'utf-8'))
+      : {};
+
+    // Check if token already exists
+    const existing = config.gateway?.auth?.token;
+    if (existing) return existing;
+
+    // Generate a new token
+    const crypto = require('crypto');
+    const token = crypto.randomBytes(24).toString('hex');
+
+    if (!config.gateway) config.gateway = {};
+    if (!config.gateway.auth) config.gateway.auth = {};
+    config.gateway.auth.mode = 'token';
+    config.gateway.auth.token = token;
+
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+    console.log('  ✓ Gateway token generated and saved');
+
+    return token;
+  } catch {
+    console.log('  ⚠ Could not generate gateway token — set it manually in ~/.openclaw/openclaw.json');
+    return '';
+  }
 }
 
 function detectOpenClaw(): { baseUrl: string; token: string } | null {
