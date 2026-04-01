@@ -3,7 +3,7 @@ import { setupOpenClaw } from './openclaw';
 import { setupOwner } from './owner';
 import { setupAgent } from './agent';
 import { writeEnvFile } from './env';
-import { installDependencies, buildWebApp, installPlugin } from './install';
+import { installDependencies, buildWebApp, installPlugin, installRecommendedSkills } from './install';
 
 export async function runSetup(): Promise<void> {
   console.log('');
@@ -32,7 +32,10 @@ export async function runSetup(): Promise<void> {
   // Step 7: Write .env
   await writeEnvFile({ db, openclaw, agent });
 
-  // Step 8: Build web app
+  // Step 8: Install recommended skills
+  await installRecommendedSkills();
+
+  // Step 9: Build web app
   await buildWebApp();
 
   console.log('');

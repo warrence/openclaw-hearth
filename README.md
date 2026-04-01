@@ -226,6 +226,10 @@ Hearth is designed with household privacy in mind:
 - **No telemetry** — no data sent to third parties
 - **PIN + WebAuthn** — local authentication with optional biometrics
 
+## Memory
+
+Hearth supports long-term memory so your assistant grows smarter over time. Built-in memory works out of the box — for enhanced semantic memory with Mem0, see the **[Memory Setup Guide](docs/memory-setup.md)**.
+
 ## Roadmap
 
 - [ ] Privacy modes (household vs private conversations)
