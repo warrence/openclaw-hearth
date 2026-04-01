@@ -154,6 +154,25 @@ ensure_node() {
   debug "running nvm use $NODE_VERSION..."
   nvm use "$NODE_VERSION" || true
 
+  # Ensure nvm is loaded in future shells
+  local shell_profile=""
+  if [ -f "$HOME/.bashrc" ]; then
+    shell_profile="$HOME/.bashrc"
+  elif [ -f "$HOME/.zshrc" ]; then
+    shell_profile="$HOME/.zshrc"
+  elif [ -f "$HOME/.profile" ]; then
+    shell_profile="$HOME/.profile"
+  fi
+
+  if [ -n "$shell_profile" ] && ! grep -q "NVM_DIR" "$shell_profile" 2>/dev/null; then
+    debug "adding nvm to $shell_profile..."
+    echo '' >> "$shell_profile"
+    echo '# nvm (added by Hearth installer)' >> "$shell_profile"
+    echo 'export NVM_DIR="$HOME/.nvm"' >> "$shell_profile"
+    echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> "$shell_profile"
+    info "nvm added to $shell_profile"
+  fi
+
   has node || fail "Node.js installation failed"
   info "Node.js $(node -v) installed"
 }
