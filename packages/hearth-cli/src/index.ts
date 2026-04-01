@@ -2,6 +2,7 @@
 import { Command } from 'commander';
 import { runSetup } from './steps/setup';
 import { runStart } from './steps/start';
+import { runPersonalize } from './steps/personalize';
 
 const program = new Command();
 
@@ -24,6 +25,13 @@ program
   .option('--api-port <port>', 'API server port', '3001')
   .action(async (opts) => {
     await runStart(opts);
+  });
+
+program
+  .command('personalize')
+  .description('Create a personality profile for your assistant')
+  .action(async () => {
+    await runPersonalize();
   });
 
 program.parse();

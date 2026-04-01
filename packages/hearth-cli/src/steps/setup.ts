@@ -4,6 +4,8 @@ import { setupOwner } from './owner';
 import { setupAgent } from './agent';
 import { writeEnvFile } from './env';
 import { installDependencies, buildWebApp, installPlugin } from './install';
+import { runPersonalize } from './personalize';
+import inquirer from 'inquirer';
 
 export async function runSetup(): Promise<void> {
   console.log('');
@@ -35,6 +37,21 @@ export async function runSetup(): Promise<void> {
   // Step 8: Build web app
   await buildWebApp();
 
+  // Optional: Personalize
+  console.log('');
+  const { personalize } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'personalize',
+      message: 'Give your assistant a name and personality now?',
+      default: true,
+    },
+  ]);
+
+  if (personalize) {
+    await runPersonalize();
+  }
+
   console.log('');
   console.log('━'.repeat(50));
   console.log('✅  Hearth is ready!');
@@ -44,6 +61,10 @@ export async function runSetup(): Promise<void> {
   console.log('');
   console.log('  📖 Enhance your assistant:');
   console.log('     docs/enhance-your-assistant.md');
+  if (!personalize) {
+    console.log('  🎭 Personalize later:');
+    console.log('     npx hearth personalize');
+  }
   console.log('━'.repeat(50));
   console.log('');
 
