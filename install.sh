@@ -307,12 +307,15 @@ clone_repo() {
 run_setup() {
   cd "$HEARTH_DIR"
 
-  # Install CLI dependencies first
+  # Install CLI dependencies and build
   warn "Installing Hearth CLI..."
-  cd packages/hearth-cli && npm install --silent 2>/dev/null && npm run build --silent 2>/dev/null && cd ../..
+  cd packages/hearth-cli
+  npm install --silent 2>/dev/null
+  npm run build --silent 2>/dev/null || npx tsc 2>/dev/null
+  cd ../..
 
-  # Run the interactive setup wizard
-  npx hearth setup
+  # Run the setup wizard using the local CLI directly
+  node packages/hearth-cli/dist/index.js setup
 }
 
 # ─────────────────────────────────────────────────
