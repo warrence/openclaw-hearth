@@ -31,7 +31,7 @@ export const openClawConfig = registerAs(
     baseUrl: process.env.OPENCLAW_BASE_URL || 'http://127.0.0.1:18789',
     token: process.env.OPENCLAW_GATEWAY_TOKEN || undefined,
     // Agent and model defaults — overridden by hearth.json (dashboard settings)
-    defaultAgentId: 'daughter-aeris',
+    defaultAgentId: 'main',
     defaultModel: 'openai-codex/gpt-5.4',
     fastModel: 'openai-codex/gpt-5.4',   // fallback only; hearth.json takes priority
     deepModel: 'anthropic/claude-sonnet-4-5', // fallback only; hearth.json takes priority
@@ -39,7 +39,7 @@ export const openClawConfig = registerAs(
     responsesHttpEnabled: process.env.OPENCLAW_RESPONSES_HTTP_ENABLED !== 'false',
     responsesPath: process.env.OPENCLAW_RESPONSES_HTTP_PATH ?? '/v1/responses',
     agentMap: {
-      aeris: 'daughter-aeris', // fallback only; hearth.json agentSettings takes priority
+      main: 'main', // fallback only; hearth.json agentSettings takes priority
     },
     hearthChannelInboundUrl:
       process.env.OPENCLAW_HEARTH_CHANNEL_INBOUND_URL ??

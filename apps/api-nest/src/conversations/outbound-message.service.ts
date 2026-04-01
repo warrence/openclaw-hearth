@@ -80,7 +80,7 @@ export class OutboundMessageService {
     });
 
     // Read agent display name from hearth.json
-    let agentName = 'Aeris';
+    let agentName = 'Assistant';
     try {
       const { readFileSync } = require('node:fs');
       const { join } = require('node:path');

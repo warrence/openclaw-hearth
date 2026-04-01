@@ -94,7 +94,7 @@ export class ConversationStreamRegistryService {
         const sessionKey = entry.params.conversation.openclaw_session_key ?? '';
         // Parse "app:{profileSlug}:conv:{uuid}" from the stored session key
         const match = /app:([^:]+):conv:([a-f0-9-]+)/i.exec(sessionKey);
-        const agentId = entry.params.conversation.agent_id ?? 'aeris';
+        const agentId = entry.params.conversation.agent_id ?? 'main';
         this.cancel(token);
         return {
           agentId,

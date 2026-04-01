@@ -53,7 +53,7 @@ const loading = ref(false)
 const gateway = ref({
   status: 'unknown',
   base_url: '—',
-  default_agent_id: 'aeris',
+  default_agent_id: 'main',
   default_model: '—',
   last_checked_at: null,
   last_error: null,

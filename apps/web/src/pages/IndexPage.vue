@@ -606,7 +606,7 @@ const modelPresetOptions = [
 ]
 const appVersionLabel = process.env.VITE_APP_VERSION || '0.0.48'
 const { agentDisplayName } = useAppShell()
-const AGENT_DISPLAY_NAME = computed(() => agentDisplayName?.value || 'Aeris')
+const AGENT_DISPLAY_NAME = computed(() => agentDisplayName?.value || 'Assistant')
 
 const imageEditQuickPrompts = [
   {

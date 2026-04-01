@@ -90,8 +90,8 @@ export class SettingsService {
     const config = this.getOpenClawConfig();
 
     // Read current mapping from hearth.json, fall back to env
-    const fromJson = this.openClawConfigWriter.get<string>('agentSettings.aeris');
-    const currentAerisId = fromJson ?? config.agentMap['aeris'] ?? config.defaultAgentId;
+    const fromJson = this.openClawConfigWriter.get<string>('agentSettings.agent');
+    const currentAgentId = fromJson ?? config.agentMap['main'] ?? config.defaultAgentId;
 
     // Read available agents from openclaw.json
     const openClawJsonPath = require('node:path').join(require('node:os').homedir(), '.openclaw', 'openclaw.json');
@@ -112,11 +112,11 @@ export class SettingsService {
 
     // Custom display name from hearth.json takes priority
     const customDisplayName = this.openClawConfigWriter.get<string>('agentDisplayName');
-    const currentAgent = availableAgents.find((a) => a.id === currentAerisId);
-    const agentDisplayName = customDisplayName || currentAgent?.name || 'Aeris';
+    const currentAgent = availableAgents.find((a) => a.id === currentAgentId);
+    const agentDisplayName = customDisplayName || currentAgent?.name || 'Assistant';
 
     return {
-      aerisAgentId: currentAerisId,
+      hearthAgentId: currentAgentId,
       agentDisplayName,
       availableAgents,
     };
@@ -151,12 +151,12 @@ export class SettingsService {
     return this.getReminderSettings();
   }
 
-  async updateAgentSettings(aerisAgentId: string): Promise<Record<string, unknown>> {
-    if (!aerisAgentId?.trim()) {
-      throw new Error('aerisAgentId is required');
+  async updateAgentSettings(hearthAgentId: string): Promise<Record<string, unknown>> {
+    if (!hearthAgentId?.trim()) {
+      throw new Error('hearthAgentId is required');
     }
     this.openClawConfigWriter.patch({
-      agentSettings: { aeris: aerisAgentId.trim() },
+      agentSettings: { agent: hearthAgentId.trim() },
     });
     return this.getAgentSettings();
   }

@@ -440,10 +440,10 @@ export function getAgentSettings() {
   return requestWithBaseUrl(NEST_API_BASE, '/agent-settings')
 }
 
-export function updateAgentSettings(aerisAgentId) {
+export function updateAgentSettings(hearthAgentId) {
   return requestWithBaseUrl(NEST_API_BASE, '/agent-settings', {
     method: 'PUT',
-    body: JSON.stringify({ aerisAgentId }),
+    body: JSON.stringify({ hearthAgentId }),
   })
 }
 

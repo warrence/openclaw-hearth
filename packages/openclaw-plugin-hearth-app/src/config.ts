@@ -6,7 +6,7 @@ import type { HearthAppResolvedAccount } from "./types.js";
 
 const CHANNEL_SECTION = "hearth-app";
 const DEFAULT_HTTP_PATH = "/channel/hearth-app/inbound";
-const DEFAULT_AGENT_ID = "daughter-aeris";
+const DEFAULT_AGENT_ID = "main";
 
 function getChannelConfig(cfg: OpenClawConfig): Record<string, unknown> {
   const channels = (cfg as Record<string, unknown>)["channels"];

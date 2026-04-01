@@ -367,7 +367,7 @@ export class ConversationsRepository {
       [
         params.userId,
         params.title,
-        params.agentId ?? user.default_agent_id ?? 'aeris',
+        params.agentId ?? user.default_agent_id ?? 'main',
         params.modelPreset ?? 'fast',
         sessionKey,
       ],

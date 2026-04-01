@@ -35,7 +35,7 @@ export class ProfilesService {
       slug,
       avatar: body.avatar ?? null,
       memory_namespace: `person:${slug}`,
-      default_agent_id: body.default_agent_id ?? 'aeris',
+      default_agent_id: body.default_agent_id ?? 'main',
       is_active: body.is_active ?? true,
       role: body.role,
     });

@@ -20,7 +20,7 @@ export interface HearthAppInboundEvent {
   profileSlug: string;
   profileName: string;
   personIdentity: string; // e.g. "person:alex"
-  agentId: string;        // "aeris"
+  agentId: string;        // e.g. "main"
 
   // Conversation
   conversationId: number;

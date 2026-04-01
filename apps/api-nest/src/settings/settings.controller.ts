@@ -74,9 +74,9 @@ export class SettingsController {
   @UseGuards(SessionAuthGuard, OwnerAuthGuard)
   @HttpCode(HttpStatus.OK)
   updateAgentSettings(
-    @Body() body: { aerisAgentId: string },
+    @Body() body: { hearthAgentId: string },
   ): Promise<Record<string, unknown>> {
-    return this.settingsService.updateAgentSettings(body.aerisAgentId);
+    return this.settingsService.updateAgentSettings(body.hearthAgentId);
   }
 
   @Put('agent-display-name')

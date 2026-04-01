@@ -521,8 +521,8 @@ const loginLoading = ref(false)
 const loginError = ref('')
 const profiles = ref([])
 const profilesLoading = ref(false)
-const agentDisplayName = ref('Aeris')
-const agentDefaultName = ref('Aeris')  // OpenClaw's agent name — used as placeholder
+const agentDisplayName = ref('Assistant')
+const agentDefaultName = ref('Assistant')  // OpenClaw's agent name — used as placeholder
 const agentNameInput = ref('')
 let eventSource = null
 
@@ -933,7 +933,7 @@ async function bootApp() {
       agentNameInput.value = agentConfig.agentDisplayName
       // Store the OpenClaw default for placeholder
       const openClawDefault = agentConfig.availableAgents?.find?.(
-        (a) => a.id === agentConfig.aerisAgentId
+        (a) => a.id === agentConfig.hearthAgentId
       )?.name || agentConfig.agentDisplayName
       agentDefaultName.value = openClawDefault
     }
@@ -1885,7 +1885,7 @@ async function handleCreateConversation() {
   try {
     const conversation = await createConversation(activeProfile.value.id, {
       title: 'New Chat',
-      agent_id: 'aeris',
+      agent_id: 'main',
     })
 
     updateConversationRecord(conversation)

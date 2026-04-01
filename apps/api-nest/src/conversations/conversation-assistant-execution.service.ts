@@ -693,7 +693,7 @@ export class ConversationAssistantExecutionService {
         event: 'status',
         data: {
           state: 'queued',
-          label: 'Queued for Aeris',
+          label: 'Queued for agent',
           stream_mode: 'openclaw-responses-http-sse',
         },
       });
@@ -705,7 +705,7 @@ export class ConversationAssistantExecutionService {
         event: 'status',
         data: {
           state: 'running',
-          label: 'Aeris is responding…',
+          label: 'Agent is responding…',
           partial_available: state.assistantText.trim() !== '',
           stream_mode: 'openclaw-responses-http-sse',
         },
@@ -1162,7 +1162,7 @@ export class ConversationAssistantExecutionService {
   }
 
   /**
-   * Stage image attachments to the agent workspace so Aeris can reference them
+   * Stage image attachments to the agent workspace so the agent can reference them
    * as local file paths in image_generate calls (avoids SSRF policy blocking
    * http://127.0.0.1 and Tailscale CGNAT URLs).
    */
@@ -1291,11 +1291,11 @@ export class ConversationAssistantExecutionService {
     const config = this.configService.getOrThrow<OpenClawConfig>('openclaw', {
       infer: true,
     });
-    const normalized = appAgentId.trim().toLowerCase() || 'aeris';
+    const normalized = appAgentId.trim().toLowerCase() || 'main';
 
     // Check hearth.json agentSettings override first (dashboard-configurable)
-    if (normalized === 'aeris') {
-      const fromJson = this.openClawConfigWriter.get<string>('agentSettings.aeris');
+    if (normalized === 'main') {
+      const fromJson = this.openClawConfigWriter.get<string>('agentSettings.agent');
       if (fromJson) return fromJson;
     }
 

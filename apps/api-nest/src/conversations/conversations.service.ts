@@ -146,8 +146,8 @@ export class ConversationsService {
     prepared: PreparedConversationMessageStream,
     emit: (event: ConversationMessageStreamEvent) => void,
   ): Promise<void> {
-    // All messages (including image gen/edit) go through Aeris via the native channel.
-    // Aeris uses the image_generate tool and returns media via the callback payload.
+    // All messages (including image gen/edit) go through the agent via the native channel.
+    // The agent uses the image_generate tool and returns media via the callback payload.
     await this.conversationAssistantExecutionService.streamAssistantReply(
       prepared,
       emit,
@@ -328,7 +328,7 @@ export class ConversationsService {
     agentId: string,
   ): Promise<void> {
     const home = process.env.HOME ?? '/root';
-    const agentSlug = agentId?.trim().toLowerCase() || 'daughter-aeris';
+    const agentSlug = agentId?.trim().toLowerCase() || 'main';
     const sessionsDir = join(home, '.openclaw', 'agents', agentSlug, 'sessions');
     const sessionsJsonPath = join(sessionsDir, 'sessions.json');
 
