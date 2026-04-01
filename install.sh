@@ -11,6 +11,12 @@ HEARTH_DIR="${HEARTH_DIR:-$HOME/hearth}"
 NODE_VERSION="22"
 PG_VERSION="16"
 
+# When piped via curl | bash, stdin is the pipe not the terminal.
+# Redirect interactive reads from /dev/tty so prompts work.
+if [ ! -t 0 ]; then
+  exec < /dev/tty
+fi
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
