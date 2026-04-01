@@ -3,32 +3,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
-function findOpenClaw(): string | null {
-  // Try which first
-  try {
-    const bin = execSync('which openclaw', { encoding: 'utf8', timeout: 5000 }).trim();
-    if (bin) return bin;
-  } catch { /* not in PATH */ }
-
-  // Check common nvm locations
-  const nvmDir = process.env.NVM_DIR || path.join(os.homedir(), '.nvm');
-  try {
-    // Find the active node version's bin
-    const nodeVersion = execSync('node -v', { encoding: 'utf8', timeout: 5000 }).trim();
-    const nvmBin = path.join(nvmDir, 'versions', 'node', nodeVersion, 'bin', 'openclaw');
-    if (fs.existsSync(nvmBin)) return nvmBin;
-  } catch { /* ignore */ }
-
-  // Check npm global prefix
-  try {
-    const prefix = execSync('npm prefix -g', { encoding: 'utf8', timeout: 5000 }).trim();
-    const npmBin = path.join(prefix, 'bin', 'openclaw');
-    if (fs.existsSync(npmBin)) return npmBin;
-  } catch { /* ignore */ }
-
-  return null;
-}
-
 function findProjectRoot(): string {
   let dir = process.cwd();
   for (let i = 0; i < 10; i++) {
@@ -39,8 +13,29 @@ function findProjectRoot(): string {
   return process.cwd();
 }
 
+function findOpenClaw(): string | null {
+  try {
+    return execSync('which openclaw', { encoding: 'utf8', timeout: 5000 }).trim() || null;
+  } catch { /* not in PATH */ }
+
+  const nvmDir = process.env.NVM_DIR || path.join(os.homedir(), '.nvm');
+  try {
+    const nodeVersion = execSync('node -v', { encoding: 'utf8', timeout: 5000 }).trim();
+    const bin = path.join(nvmDir, 'versions', 'node', nodeVersion, 'bin', 'openclaw');
+    if (fs.existsSync(bin)) return bin;
+  } catch { /* ignore */ }
+
+  try {
+    const prefix = execSync('npm prefix -g', { encoding: 'utf8', timeout: 5000 }).trim();
+    const bin = path.join(prefix, 'bin', 'openclaw');
+    if (fs.existsSync(bin)) return bin;
+  } catch { /* ignore */ }
+
+  return null;
+}
+
 export async function installDependencies(): Promise<void> {
-  console.log('📦  Step 1/7: Installing dependencies');
+  console.log('📦  Installing dependencies');
   console.log('');
 
   const root = findProjectRoot();
@@ -100,65 +95,105 @@ export async function installDependencies(): Promise<void> {
     }
   }
 
-  // Install plugin into OpenClaw if openclaw CLI is available
-  try {
-    const openclawBin = findOpenClaw();
-    if (openclawBin) {
-      console.log('  → Installing Hearth plugin into OpenClaw...');
-      try {
-        execSync(`${openclawBin} plugins install "${pluginDir}"`, { stdio: 'pipe', timeout: 30000 });
-        console.log('  ✓ Hearth plugin installed in OpenClaw');
-      } catch {
-        console.log('  ⚠ Plugin install into OpenClaw failed — you may need to run manually:');
-        console.log(`    openclaw plugins install ${pluginDir}`);
-      }
-    }
-  } catch {
-    // openclaw not found yet — will be handled in openclaw setup step
-  }
-
   console.log('');
 }
 
 export async function installPlugin(): Promise<void> {
   const root = findProjectRoot();
   const pluginDir = path.join(root, 'packages', 'openclaw-plugin-hearth-app');
+  const configPath = path.join(os.homedir(), '.openclaw', 'openclaw.json');
+
+  console.log('  🔌 Configuring Hearth plugin in OpenClaw...');
+
+  // Generate a channel token
+  const crypto = require('crypto');
+  const channelToken = crypto.randomBytes(24).toString('hex');
 
   try {
-    const openclawBin = findOpenClaw();
-    if (!openclawBin) { console.log("  ⚠ OpenClaw binary not found — skip plugin install"); console.log(""); return; }
+    // Read or create openclaw.json
+    const config: Record<string, any> = fs.existsSync(configPath)
+      ? JSON.parse(fs.readFileSync(configPath, 'utf-8'))
+      : {};
 
-    // Check if already installed
+    // 1. Add plugin to load paths (this is how OpenClaw discovers plugins)
+    if (!config.plugins) config.plugins = {};
+    if (!config.plugins.load) config.plugins.load = {};
+    if (!config.plugins.load.paths) config.plugins.load.paths = [];
+    if (!config.plugins.load.paths.includes(pluginDir)) {
+      config.plugins.load.paths.push(pluginDir);
+    }
+
+    // 2. Add channel config (this is where the plugin reads its settings)
+    if (!config.channels) config.channels = {};
+    config.channels['hearth-app'] = {
+      enabled: true,
+      token: channelToken,
+      httpPath: '/channel/hearth-app/inbound',
+    };
+
+    // 3. Ensure gateway auth token exists
+    if (!config.gateway) config.gateway = {};
+    if (!config.gateway.auth) config.gateway.auth = {};
+    if (!config.gateway.auth.token) {
+      config.gateway.auth.mode = 'token';
+      config.gateway.auth.token = crypto.randomBytes(24).toString('hex');
+      console.log('  ✓ Gateway token generated');
+    }
+
+    // 4. Also create symlink in extensions (belt + suspenders)
+    const extensionsDir = path.join(os.homedir(), '.openclaw', 'extensions');
+    const extensionLink = path.join(extensionsDir, 'hearth-app');
+    if (!fs.existsSync(extensionsDir)) {
+      fs.mkdirSync(extensionsDir, { recursive: true });
+    }
     try {
-      const plugins = execSync(`${openclawBin} plugins list 2>/dev/null`, { encoding: 'utf8', timeout: 10000 });
-      if (plugins.includes('hearth-app')) {
-        console.log('  ✓ Hearth plugin already installed in OpenClaw');
-        return;
+      if (fs.existsSync(extensionLink)) {
+        fs.rmSync(extensionLink, { recursive: true, force: true });
       }
+      fs.symlinkSync(pluginDir, extensionLink);
     } catch {
-      // plugins list failed — try installing anyway
+      // symlink failed — load.paths should still work
     }
 
-    console.log('  🔌 Installing Hearth plugin into OpenClaw...');
-    execSync(`${openclawBin} plugins install "${pluginDir}"`, { stdio: 'pipe', timeout: 30000 });
-    console.log('  ✓ Hearth plugin installed');
+    // Save config
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+    console.log('  ✓ Plugin configured in OpenClaw');
+    console.log(`  ✓ Channel token: ${channelToken.slice(0, 8)}...`);
 
-    // Restart gateway to load the plugin
-    try {
-      execSync(`${openclawBin} gateway restart`, { stdio: 'pipe', timeout: 15000 });
-      console.log('  ✓ OpenClaw gateway restarted');
-    } catch {
-      console.log('  ⚠ Could not restart gateway — restart OpenClaw manually to load the plugin');
+    // 5. Save channel token + gateway token to Hearth .env
+    const envPath = path.join(root, 'apps', 'api-nest', '.env');
+    if (fs.existsSync(envPath)) {
+      let env = fs.readFileSync(envPath, 'utf-8');
+
+      // Update or add OPENCLAW_HEARTH_CHANNEL_TOKEN
+      if (env.includes('OPENCLAW_HEARTH_CHANNEL_TOKEN=')) {
+        env = env.replace(/OPENCLAW_HEARTH_CHANNEL_TOKEN=.*/g, `OPENCLAW_HEARTH_CHANNEL_TOKEN=${channelToken}`);
+      } else {
+        env += `\nOPENCLAW_HEARTH_CHANNEL_TOKEN=${channelToken}`;
+      }
+
+      // Update or add OPENCLAW_GATEWAY_TOKEN
+      const gatewayToken = config.gateway.auth.token;
+      if (env.includes('OPENCLAW_GATEWAY_TOKEN=')) {
+        env = env.replace(/OPENCLAW_GATEWAY_TOKEN=.*/g, `OPENCLAW_GATEWAY_TOKEN=${gatewayToken}`);
+      } else {
+        env += `\nOPENCLAW_GATEWAY_TOKEN=${gatewayToken}`;
+      }
+
+      fs.writeFileSync(envPath, env);
+      console.log('  ✓ Tokens saved to .env');
     }
-  } catch {
-    console.log('  ⚠ OpenClaw not found — install the plugin manually after installing OpenClaw:');
-    console.log(`    openclaw plugins install ${pluginDir}`);
+
+  } catch (err: any) {
+    console.log(`  ⚠ Plugin configuration failed: ${err.message}`);
+    console.log('  Manual fix: see docs/enhance-your-assistant.md');
   }
+
   console.log('');
 }
 
 export async function buildWebApp(): Promise<void> {
-  console.log('🔨  Step 7/7: Building web app');
+  console.log('🔨  Building web app');
   console.log('');
 
   const root = findProjectRoot();
@@ -171,7 +206,7 @@ export async function buildWebApp(): Promise<void> {
     return;
   }
 
-  console.log('  → Building PWA...');
+  console.log('  → Building PWA (this may take a minute)...');
   try {
     execSync('npm run build:pwa', { cwd: webDir, stdio: 'pipe', timeout: 120000 });
     console.log('  ✓ Web app built');
