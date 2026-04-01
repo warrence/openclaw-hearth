@@ -133,15 +133,23 @@ export async function setupAgent(openclaw: OpenClawConfig): Promise<AgentConfig>
 
   // Web search setup
   console.log('');
+  console.log('  🔍 Web Search');
+  console.log('');
+  console.log('  Without web search, your assistant cannot look things up online.');
+  console.log('  It won\'t be able to check the weather, search for recipes,');
+  console.log('  look up prices, find news, or answer questions about current events.');
+  console.log('');
+  console.log('  Both options below are free and take 30 seconds to set up.');
+  console.log('');
   const { searchProvider } = await inquirer.prompt([
     {
       type: 'list',
       name: 'searchProvider',
-      message: 'Web search provider:',
+      message: 'Choose a web search provider:',
       choices: [
-        { name: 'Tavily (recommended — AI-optimized, 1,000 free searches/month)', value: 'tavily' },
-        { name: 'Brave Search (2,000 free searches/month)', value: 'brave' },
-        { name: 'Skip — set up later', value: 'skip' },
+        { name: 'Tavily — AI-optimized search, 1,000 free searches/month (recommended)', value: 'tavily' },
+        { name: 'Brave Search — 2,000 free searches/month', value: 'brave' },
+        { name: 'Skip — my assistant won\'t be able to search the web', value: 'skip' },
       ],
     },
   ]);
