@@ -107,6 +107,60 @@ Or visit [clawhub.com](https://clawhub.com) to explore.
 
 ---
 
+## 🎭 Personalize Your Assistant
+
+Give your assistant a name and personality that fits your household.
+
+### Display Name
+
+Change the name shown in the Hearth app via the **Dashboard → Agent Settings** page, or set it in `~/.openclaw/hearth.json`:
+
+```json
+{
+  "agentDisplayName": "Luna"
+}
+```
+
+### Personality
+
+Your assistant's personality is defined in its OpenClaw workspace. Create or edit `~/.openclaw/workspace/SOUL.md`:
+
+```markdown
+# SOUL.md
+
+You are Luna, a warm and helpful household assistant.
+
+## Personality
+- Friendly and casual, but not overly chatty
+- You know the family well and care about their wellbeing
+- You use emoji occasionally but don't overdo it
+- You remember preferences and adapt over time
+
+## Boundaries
+- Never share one family member's private conversations with another
+- Always ask before taking actions that affect the household
+- Be honest when you don't know something
+
+## How you address the family
+- Dad → "Hey Dad" or by first name
+- Mom → "Hey Mom" or by first name
+- Kids → by their first name, keep it age-appropriate
+```
+
+The agent reads `SOUL.md` at the start of every session. Change it anytime — the personality updates immediately.
+
+### Agent Name in OpenClaw
+
+If you want to rename the agent itself (not just the display name):
+
+```bash
+openclaw setup
+```
+
+This lets you reconfigure the agent identity, or create a new agent with a different name.
+
+---
+
 ## 🔧 Model Configuration
 
 To change your AI model or switch providers:
