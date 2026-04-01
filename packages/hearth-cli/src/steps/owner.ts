@@ -3,7 +3,7 @@ import * as bcrypt from 'bcrypt';
 import type { DatabaseConfig } from './database';
 
 export async function setupOwner(db: DatabaseConfig): Promise<void> {
-  console.log('👤  Step 3/4: Owner account');
+  console.log('👤  Owner account');
   console.log('');
 
   // Check if owner already exists
@@ -35,17 +35,10 @@ export async function setupOwner(db: DatabaseConfig): Promise<void> {
       validate: (v: string) => v.trim().length > 0 || 'Name is required',
     },
     {
-      type: 'confirm',
-      name: 'setPin',
-      message: 'Set a PIN for this account?',
-      default: false,
-    },
-    {
       type: 'password',
       name: 'pin',
-      message: 'Enter PIN:',
-      when: (a: any) => a.setPin,
-      validate: (v: string) => v.length >= 4 || 'PIN must be at least 4 characters',
+      message: 'Set a PIN (4+ characters):',
+      validate: (v: string) => v.length >= 4 || 'PIN must be at least 4 characters — this is required to log in',
     },
   ]);
 
@@ -53,13 +46,13 @@ export async function setupOwner(db: DatabaseConfig): Promise<void> {
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const memoryNamespace = `person:${slug}`;
   const now = new Date().toISOString();
-  const pinHash = answers.pin ? await hashPin(answers.pin) : null;
+  const pinHash = await hashPin(answers.pin);
 
   await db.client.query(
     `INSERT INTO users (name, slug, memory_namespace, role, is_active, requires_pin, pin_hash, pin_set_at, created_at, updated_at)
-     VALUES ($1, $2, $3, 'owner', true, $4, $5, $6, $7, $7)
-     ON CONFLICT (slug) DO UPDATE SET role = 'owner', name = $1, updated_at = $7`,
-    [name, slug, memoryNamespace, !!answers.pin, pinHash, answers.pin ? now : null, now]
+     VALUES ($1, $2, $3, 'owner', true, true, $4, $5, $6, $6)
+     ON CONFLICT (slug) DO UPDATE SET role = 'owner', name = $1, pin_hash = $4, pin_set_at = $5, requires_pin = true, updated_at = $6`,
+    [name, slug, memoryNamespace, pinHash, now, now]
   );
 
   console.log(`  ✓ Owner account created: ${name}`);
