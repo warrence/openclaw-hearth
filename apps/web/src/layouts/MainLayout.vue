@@ -7,6 +7,24 @@
     </div>
   </transition>
 
+  <!-- OpenClaw status banner -->
+  <div v-if="authChecked && openclawStatus !== 'connected' && openclawStatus !== 'unknown'" class="openclaw-status-banner">
+    <div v-if="openclawStatus === 'not_configured'" class="openclaw-status-banner__content">
+      <span class="openclaw-status-banner__icon">⚠️</span>
+      <div>
+        <strong>AI model not configured</strong>
+        <p>Run <code>openclaw setup</code> on your server to configure your AI provider, then restart Hearth.</p>
+      </div>
+    </div>
+    <div v-else-if="openclawStatus === 'disconnected'" class="openclaw-status-banner__content">
+      <span class="openclaw-status-banner__icon">🔌</span>
+      <div>
+        <strong>OpenClaw is not running</strong>
+        <p>Start OpenClaw with <code>openclaw gateway start</code> on your server.</p>
+      </div>
+    </div>
+  </div>
+
   <div class="app-layout">
     <aside
       class="app-sidebar"
@@ -496,6 +514,7 @@ import {
   login,
   createUserEventStream,
   getAgentSettings,
+  getHealthStatus,
   updateAgentDisplayName,
   logout,
   restoreConversation,
@@ -513,6 +532,7 @@ const appVersionLabel = process.env.VITE_APP_VERSION || '0.0.81'
 
 const currentUser = ref(null)
 const authChecked = ref(false)
+const openclawStatus = ref('unknown') // 'connected' | 'disconnected' | 'not_configured' | 'unknown'
 const loginDialogOpen = ref(false)
 const loginStep = ref('profile') // 'profile' | 'pin'
 const loginSelectedProfile = ref(null)
@@ -924,6 +944,20 @@ function enterLoginState() {
 async function bootApp() {
   authChecked.value = false
   recordLastActiveAt()
+
+  // Check OpenClaw health
+  try {
+    const health = await getHealthStatus()
+    if (health?.openclaw?.status === 'not_configured') {
+      openclawStatus.value = 'not_configured'
+    } else if (health?.openclaw?.status === 'disconnected') {
+      openclawStatus.value = 'disconnected'
+    } else {
+      openclawStatus.value = 'connected'
+    }
+  } catch {
+    openclawStatus.value = 'unknown'
+  }
 
   // Fetch agent display name from OpenClaw config
   try {
@@ -2111,6 +2145,44 @@ async function syncRouteQuery(patch) {
 </script>
 
 <style scoped lang="scss">
+.openclaw-status-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: #7c3aed;
+  color: #fff;
+  padding: 12px 20px;
+  font-size: 14px;
+
+  &__content {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    max-width: 600px;
+    margin: 0 auto;
+
+    p {
+      margin: 4px 0 0;
+      font-size: 13px;
+      opacity: 0.9;
+    }
+
+    code {
+      background: rgba(255,255,255,0.2);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+  }
+
+  &__icon {
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+}
+
 .app-boot-overlay {
   position: fixed;
   inset: 0;

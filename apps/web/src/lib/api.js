@@ -613,3 +613,7 @@ export async function streamConversationMessage(conversationId, payload, handler
 
   parse(decoder.decode())
 }
+
+export async function getHealthStatus() {
+  return requestWithBaseUrl(NEST_API_BASE, "/health")
+}
