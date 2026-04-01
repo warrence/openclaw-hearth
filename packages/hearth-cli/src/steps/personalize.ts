@@ -158,7 +158,7 @@ export async function runPersonalize(presetName?: string): Promise<void> {
         type: 'confirm',
         name: 'overwrite',
         message: 'SOUL.md already exists. Overwrite it?',
-        default: false,
+        default: true,
       },
     ]);
     if (!overwrite) {
