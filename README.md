@@ -106,41 +106,46 @@ Each household member gets their own profile with PIN authentication. Conversati
 
 ## Quick Start
 
-### Prerequisites
-- **Node.js** 22+
-- **PostgreSQL** 16+
-- **OpenClaw** ([install guide](https://docs.openclaw.ai))
-
-### Setup
+### One-Line Install (macOS / Linux)
 
 ```bash
-git clone https://github.com/warrence/openclaw-hearth.git
-cd hearth
-npx hearth setup
+curl -fsSL https://raw.githubusercontent.com/warrence/openclaw-hearth/main/install.sh | bash
 ```
 
-That's it. The setup wizard will:
-1. Install all dependencies automatically
-2. Connect to PostgreSQL and create the schema
-3. Detect or install OpenClaw
-4. Create your owner account
-5. Configure the agent
-6. Generate the `.env` file
-7. Build the web app
+This automatically detects and installs everything you need:
+- **git** — clones the repo
+- **Node.js 22** — via nvm
+- **PostgreSQL 16** — local install or Docker container
+- **OpenClaw** — detected or installed during setup
+- **All dependencies** — npm install for all packages
+
+Then runs the interactive setup wizard to configure your owner account, agent, and database.
 
 ### Start
 
 ```bash
+cd ~/hearth
 npx hearth start
 ```
 
 Open `http://localhost:9100` in your browser.
 
+### Manual Setup
+
+If you prefer to install prerequisites yourself:
+
+```bash
+git clone https://github.com/warrence/openclaw-hearth.git
+cd openclaw-hearth
+npx hearth setup
+npx hearth start
+```
+
 ### Docker
 
 ```bash
 git clone https://github.com/warrence/openclaw-hearth.git
-cd hearth
+cd openclaw-hearth
 docker compose up
 ```
 
