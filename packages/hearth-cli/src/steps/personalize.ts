@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
-export async function runPersonalize(): Promise<void> {
+export async function runPersonalize(presetName?: string): Promise<void> {
   console.log('');
   console.log('🎭  Personalize Your Assistant');
   console.log('─'.repeat(50));
@@ -12,16 +12,24 @@ export async function runPersonalize(): Promise<void> {
   console.log('  profile for your assistant. You can change it anytime.');
   console.log('');
 
-  // Name
-  const { name } = await inquirer.prompt([
-    {
-      type: 'input',
-      name: 'name',
-      message: 'What should your assistant\'s name be?',
-      default: 'Assistant',
-      validate: (v: string) => v.trim().length > 0 || 'A name is required',
-    },
-  ]);
+  // Name — skip if already provided from setup
+  let name: string;
+  if (presetName && presetName !== 'Assistant') {
+    name = presetName;
+    console.log(`  Using name: ${name}`);
+    console.log('');
+  } else {
+    const answer = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'name',
+        message: 'What should your assistant\'s name be?',
+        default: presetName || 'Assistant',
+        validate: (v: string) => v.trim().length > 0 || 'A name is required',
+      },
+    ]);
+    name = answer.name;
+  }
 
   // Personality vibe
   const { vibe } = await inquirer.prompt([

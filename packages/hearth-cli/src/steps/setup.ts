@@ -37,19 +37,19 @@ export async function runSetup(): Promise<void> {
   // Step 8: Build web app
   await buildWebApp();
 
-  // Optional: Personalize
+  // Optional: Personalize (pass in the name already chosen)
   console.log('');
   const { personalize } = await inquirer.prompt([
     {
       type: 'confirm',
       name: 'personalize',
-      message: 'Give your assistant a name and personality now?',
+      message: 'Set up your assistant\'s personality now?',
       default: true,
     },
   ]);
 
   if (personalize) {
-    await runPersonalize();
+    await runPersonalize(agent.displayName);
   }
 
   console.log('');
