@@ -131,6 +131,49 @@ export async function setupAgent(openclaw: OpenClawConfig): Promise<AgentConfig>
     },
   ]);
 
+  // Web search setup
+  console.log('');
+  const { setupSearch } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'setupSearch',
+      message: 'Enable web search? (free Brave Search API — 2,000 searches/month)',
+      default: true,
+    },
+  ]);
+
+  if (setupSearch) {
+    console.log('');
+    console.log('  Get a free API key at: https://brave.com/search/api/');
+    console.log('');
+
+    const { braveApiKey } = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'braveApiKey',
+        message: 'Brave Search API key (or press Enter to skip):',
+      },
+    ]);
+
+    if (braveApiKey?.trim()) {
+      const configPath = path.join(os.homedir(), '.openclaw', 'openclaw.json');
+      try {
+        const config = fs.existsSync(configPath)
+          ? JSON.parse(fs.readFileSync(configPath, 'utf-8'))
+          : {};
+        if (!config.auth) config.auth = {};
+        if (!config.auth.env) config.auth.env = {};
+        config.auth.env.BRAVE_API_KEY = braveApiKey.trim();
+        fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+        console.log('  ✓ Web search enabled');
+      } catch {
+        console.log('  ⚠ Could not save — add BRAVE_API_KEY to ~/.openclaw/openclaw.json manually');
+      }
+    } else {
+      console.log('  → Skipped — you can add it later in ~/.openclaw/openclaw.json');
+    }
+  }
+
   let model: string | undefined;
   if (configureModel) {
     console.log('');
