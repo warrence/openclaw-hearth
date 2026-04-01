@@ -96,6 +96,36 @@ CREATE TABLE IF NOT EXISTS webauthn_credentials (
     created_at timestamptz DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS model_preset_settings (
+    id bigserial PRIMARY KEY,
+    fast_model_id varchar(255),
+    fast_think_level varchar(20) DEFAULT 'off',
+    fast_reasoning_enabled boolean DEFAULT false,
+    deep_model_id varchar(255),
+    deep_think_level varchar(20) DEFAULT 'medium',
+    deep_reasoning_enabled boolean DEFAULT true,
+    created_at timestamp(0),
+    updated_at timestamp(0)
+);
+
+CREATE TABLE IF NOT EXISTS tts_settings (
+    id bigserial PRIMARY KEY,
+    provider varchar(50) DEFAULT 'openclaw',
+    voice varchar(100) DEFAULT 'alloy',
+    speed numeric(3,2) DEFAULT 1.0,
+    created_at timestamp(0),
+    updated_at timestamp(0)
+);
+
+CREATE TABLE IF NOT EXISTS image_provider_settings (
+    id bigserial PRIMARY KEY,
+    provider varchar(50) DEFAULT 'openclaw',
+    model varchar(100),
+    quality varchar(20) DEFAULT 'low',
+    created_at timestamp(0),
+    updated_at timestamp(0)
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_conversations_user_id ON conversations(user_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_status ON conversations(status);
