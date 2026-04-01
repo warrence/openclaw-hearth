@@ -65,22 +65,38 @@ export async function setupOpenClaw(): Promise<OpenClawConfig> {
       try {
         execSync('npm install -g openclaw', { stdio: 'inherit' });
         console.log('  ✓ OpenClaw installed');
-        console.log('');
-        console.log('  Please run "openclaw setup" to configure OpenClaw,');
-        console.log('  then re-run "hearth setup".');
-        process.exit(0);
       } catch {
         console.error('  ✗ Installation failed. Please install OpenClaw manually:');
         console.log('    npm install -g openclaw');
         process.exit(1);
       }
+
+      // Run openclaw setup automatically
+      console.log('  → Running OpenClaw initial setup...');
+      try {
+        execSync('openclaw setup --non-interactive 2>/dev/null || openclaw setup 2>/dev/null || true', {
+          stdio: 'inherit',
+          timeout: 30000,
+        });
+      } catch {
+        console.log('  ⚠ OpenClaw setup may need manual configuration later');
+      }
+
+      // Re-detect after install
+      const freshDetected = detectOpenClaw();
+      if (freshDetected) {
+        const agents = await fetchAgents(freshDetected.baseUrl, freshDetected.token);
+        console.log(`  ✓ OpenClaw configured at ${freshDetected.baseUrl}`);
+        console.log('');
+        return { ...freshDetected, agents };
+      }
+
+      // Fall through to manual config
     } else {
       console.log('');
-      console.log('  Hearth requires OpenClaw to work.');
-      console.log('  Install it with: npm install -g openclaw');
-      console.log('  Then run: openclaw setup');
-      console.log('  Then re-run: hearth setup');
-      process.exit(0);
+      console.log('  ⚠ Hearth requires OpenClaw to work.');
+      console.log('  You can install it later with: npm install -g openclaw');
+      console.log('');
     }
   }
 
