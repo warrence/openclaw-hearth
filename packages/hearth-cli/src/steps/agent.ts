@@ -1,43 +1,205 @@
 import inquirer from 'inquirer';
+import { execSync } from 'child_process';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 import type { OpenClawConfig } from './openclaw';
 
 export interface AgentConfig {
   agentId: string;
   displayName: string;
+  model?: string;
+}
+
+function detectAgentsFromConfig(): string[] {
+  const agents: string[] = [];
+  const configPaths = [
+    path.join(os.homedir(), '.openclaw', 'openclaw.json'),
+    path.join(os.homedir(), '.config', 'openclaw', 'openclaw.json'),
+  ];
+
+  for (const configPath of configPaths) {
+    try {
+      if (!fs.existsSync(configPath)) continue;
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+
+      // Check agents config
+      if (config.agents?.entries) {
+        agents.push(...Object.keys(config.agents.entries));
+      }
+      // Check default agent
+      if (config.agents?.default && !agents.includes(config.agents.default)) {
+        agents.unshift(config.agents.default);
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  // Also check agents directory
+  const agentsDir = path.join(os.homedir(), '.openclaw', 'agents');
+  try {
+    if (fs.existsSync(agentsDir)) {
+      const dirs = fs.readdirSync(agentsDir).filter((d) => {
+        return fs.statSync(path.join(agentsDir, d)).isDirectory() && !d.startsWith('.');
+      });
+      for (const d of dirs) {
+        if (!agents.includes(d)) agents.push(d);
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  return agents;
+}
+
+function detectModelsFromConfig(): string[] {
+  const configPaths = [
+    path.join(os.homedir(), '.openclaw', 'openclaw.json'),
+  ];
+
+  for (const configPath of configPaths) {
+    try {
+      if (!fs.existsSync(configPath)) continue;
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+
+      // Check if default model is set
+      const models: string[] = [];
+      if (config.agents?.defaults?.model) {
+        models.push(config.agents.defaults.model);
+      }
+      return models;
+    } catch {
+      continue;
+    }
+  }
+
+  return [];
 }
 
 export async function setupAgent(openclaw: OpenClawConfig): Promise<AgentConfig> {
-  console.log('🤖  Step 4/4: Agent configuration');
+  console.log('🤖  Step 4/4: Agent & model configuration');
   console.log('');
 
-  let defaultAgent = 'daughter-aeris';
-  if (openclaw.agents.length > 0) {
+  // Auto-detect agents from OpenClaw config
+  const detectedAgents = detectAgentsFromConfig();
+  const allAgents = [...new Set([...openclaw.agents, ...detectedAgents])];
+
+  let defaultAgent = 'main';
+  if (allAgents.length > 0) {
     console.log('  Available agents:');
-    openclaw.agents.forEach((a) => console.log(`    - ${a}`));
+    allAgents.forEach((a) => console.log(`    - ${a}`));
     console.log('');
-    defaultAgent = openclaw.agents[0];
+    defaultAgent = allAgents[0];
+  } else {
+    console.log('  No agents detected — you can create one later in OpenClaw.');
+    console.log('');
   }
 
-  const answers = await inquirer.prompt([
+  const agentAnswers = await inquirer.prompt([
     {
-      type: 'input',
+      type: allAgents.length > 1 ? 'list' : 'input',
       name: 'agentId',
-      message: 'OpenClaw agent ID:',
+      message: 'Which OpenClaw agent should Hearth use?',
+      choices: allAgents.length > 1 ? allAgents : undefined,
       default: defaultAgent,
     },
     {
       type: 'input',
       name: 'displayName',
-      message: 'Display name in app:',
-      default: 'Aeris',
+      message: 'Display name for the agent in the app:',
+      default: 'Assistant',
     },
   ]);
 
-  console.log(`  ✓ Agent configured: ${answers.displayName} (${answers.agentId})`);
+  console.log(`  ✓ Agent: ${agentAnswers.displayName} (${agentAnswers.agentId})`);
+
+  // Model configuration
+  console.log('');
+  const detectedModels = detectModelsFromConfig();
+  if (detectedModels.length > 0) {
+    console.log(`  Current default model: ${detectedModels[0]}`);
+  }
+
+  const { configureModel } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'configureModel',
+      message: 'Configure the AI model now?',
+      default: detectedModels.length === 0,
+    },
+  ]);
+
+  let model: string | undefined;
+  if (configureModel) {
+    console.log('');
+    console.log('  Common models:');
+    console.log('    - anthropic/claude-sonnet-4-5    (Anthropic — balanced)');
+    console.log('    - anthropic/claude-haiku-4-5     (Anthropic — fast & cheap)');
+    console.log('    - openai/gpt-4o                  (OpenAI — balanced)');
+    console.log('    - openai/gpt-4o-mini             (OpenAI — fast & cheap)');
+    console.log('    - google/gemini-2.5-flash         (Google — fast)');
+    console.log('');
+
+    const modelAnswers = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'model',
+        message: 'Default model (provider/model):',
+        default: detectedModels[0] ?? 'anthropic/claude-sonnet-4-5',
+      },
+      {
+        type: 'input',
+        name: 'apiKey',
+        message: 'API key for this provider:',
+        validate: (v: string) => v.trim().length > 0 || 'API key is required for the model to work',
+      },
+    ]);
+
+    model = modelAnswers.model;
+
+    // Write the model + API key to openclaw.json
+    const configPath = path.join(os.homedir(), '.openclaw', 'openclaw.json');
+    try {
+      const config = fs.existsSync(configPath)
+        ? JSON.parse(fs.readFileSync(configPath, 'utf-8'))
+        : {};
+
+      // Set default model
+      if (!config.agents) config.agents = {};
+      if (!config.agents.defaults) config.agents.defaults = {};
+      config.agents.defaults.model = modelAnswers.model;
+
+      // Set API key based on provider
+      const provider = modelAnswers.model.split('/')[0];
+      if (!config.auth) config.auth = {};
+
+      const providerKeyMap: Record<string, string> = {
+        anthropic: 'ANTHROPIC_API_KEY',
+        openai: 'OPENAI_API_KEY',
+        google: 'GEMINI_API_KEY',
+      };
+
+      const envKey = providerKeyMap[provider];
+      if (envKey) {
+        if (!config.auth.env) config.auth.env = {};
+        config.auth.env[envKey] = modelAnswers.apiKey;
+      }
+
+      fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+      console.log(`  ✓ Model configured: ${modelAnswers.model}`);
+      console.log(`  ✓ API key saved to ~/.openclaw/openclaw.json`);
+    } catch (err) {
+      console.log(`  ⚠ Could not save model config — set it manually in ~/.openclaw/openclaw.json`);
+    }
+  }
+
   console.log('');
 
   return {
-    agentId: answers.agentId,
-    displayName: answers.displayName,
+    agentId: agentAnswers.agentId,
+    displayName: agentAnswers.displayName,
+    model,
   };
 }
