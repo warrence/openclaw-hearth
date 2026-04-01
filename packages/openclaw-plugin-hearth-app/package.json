@@ -1,0 +1,35 @@
+{
+  "name": "openclaw-plugin-hearth-app",
+  "version": "0.1.0",
+  "description": "OpenClaw native channel plugin for Hearth app",
+  "type": "module",
+  "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "peerDependencies": {
+    "openclaw": "*"
+  },
+  "openclaw": {
+    "extensions": [
+      "./dist/index.js"
+    ],
+    "channel": {
+      "id": "hearth-app",
+      "label": "Hearth App",
+      "selectionLabel": "Hearth App",
+      "docsPath": "/channels/hearth-app",
+      "docsLabel": "hearth-app",
+      "blurb": "Native channel plugin for the Hearth app"
+    }
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

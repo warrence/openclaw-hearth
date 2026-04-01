@@ -59,9 +59,9 @@ tmp/
 launchd/
 designs/
 
-# Package manager
-package.json
-package-lock.json
+# Root package manager (not needed — each package has its own)
+/package.json
+/package-lock.json
 
 # Apps build/env
 apps/api-nest/dist/
