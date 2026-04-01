@@ -358,9 +358,9 @@ run_setup() {
   debug "CLI built"
   cd ../..
 
-  # Run the setup wizard using the local CLI directly
-  debug "launching: node packages/hearth-cli/dist/index.js setup"
-  node packages/hearth-cli/dist/index.js setup
+  # Run the setup wizard
+  debug "launching: npm run setup"
+  npm run setup
 }
 
 # ─────────────────────────────────────────────────

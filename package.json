@@ -1,0 +1,14 @@
+{
+  "name": "openclaw-hearth",
+  "version": "1.0.0",
+  "description": "A self-hosted, multi-user household AI assistant built on OpenClaw",
+  "private": true,
+  "bin": {
+    "hearth": "./packages/hearth-cli/dist/index.js"
+  },
+  "scripts": {
+    "setup": "node packages/hearth-cli/dist/index.js setup",
+    "start": "node packages/hearth-cli/dist/index.js start",
+    "personalize": "node packages/hearth-cli/dist/index.js personalize"
+  }
+}

@@ -59,8 +59,7 @@ tmp/
 launchd/
 designs/
 
-# Root package manager (not needed — each package has its own)
-/package.json
+# Root lock file
 /package-lock.json
 
 # Apps build/env
