@@ -406,6 +406,10 @@ main() {
   debug "cloning repo..."
   clone_repo
 
+  # Ensure nvm is loaded for the rest of the script
+  export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
   step "Step 3: Setup"
   debug "running setup wizard..."
   run_setup
