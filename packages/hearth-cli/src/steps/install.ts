@@ -123,7 +123,12 @@ export async function installPlugin(): Promise<void> {
       config.plugins.load.paths.push(pluginDir);
     }
 
-    // 2. Add channel config (this is where the plugin reads its settings)
+    // 2. Remove stale plugins.entries.hearth-app (causes config validation error)
+    if (config.plugins?.entries?.['hearth-app']) {
+      delete config.plugins.entries['hearth-app'];
+    }
+
+    // 3. Add channel config (this is where the plugin reads its settings)
     if (!config.channels) config.channels = {};
     config.channels['hearth-app'] = {
       enabled: true,
