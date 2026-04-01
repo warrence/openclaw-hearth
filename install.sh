@@ -10,6 +10,16 @@ HEARTH_REPO="https://github.com/warrence/openclaw-hearth.git"
 HEARTH_DIR="${HEARTH_DIR:-$HOME/hearth}"
 NODE_VERSION="22"
 PG_VERSION="16"
+VERBOSE="${VERBOSE:-false}"
+
+# Pass VERBOSE=true or -v flag for debug output
+for arg in "$@"; do
+  case "$arg" in
+    -v|--verbose) VERBOSE=true ;;
+  esac
+done
+
+debug() { [ "$VERBOSE" = true ] && echo -e "  ${CYAN}[debug]${NC} $1" || true; }
 
 # Detect interactive mode.
 # When piped (curl | bash), stdin is consumed. We try /dev/tty as fallback.
@@ -127,16 +137,21 @@ ensure_node() {
     export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
     if [ ! -s "$NVM_DIR/nvm.sh" ]; then
       warn "Installing nvm..."
+      debug "downloading nvm install script..."
       curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | PROFILE=/dev/null bash
+      debug "nvm install script finished"
     fi
   fi
 
   export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
   # shellcheck disable=SC1091
+  debug "sourcing nvm..."
   [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
   warn "Installing Node.js ${NODE_VERSION} (this may take a minute)..."
+  debug "running nvm install $NODE_VERSION..."
   nvm install "$NODE_VERSION" || fail "Node.js installation failed"
+  debug "running nvm use $NODE_VERSION..."
   nvm use "$NODE_VERSION" || true
 
   has node || fail "Node.js installation failed"
@@ -309,12 +324,20 @@ run_setup() {
 
   # Install CLI dependencies and build
   warn "Installing Hearth CLI..."
+  debug "cd packages/hearth-cli && npm install..."
   cd packages/hearth-cli
-  npm install --silent 2>/dev/null
-  npm run build --silent 2>/dev/null || npx tsc 2>/dev/null
+  if [ "$VERBOSE" = true ]; then
+    npm install
+  else
+    npm install --silent 2>/dev/null
+  fi
+  debug "building CLI..."
+  npm run build 2>&1 || npx tsc 2>&1
+  debug "CLI built"
   cd ../..
 
   # Run the setup wizard using the local CLI directly
+  debug "launching: node packages/hearth-cli/dist/index.js setup"
   node packages/hearth-cli/dist/index.js setup
 }
 
@@ -331,14 +354,19 @@ main() {
   info "Detected OS: $OS"
 
   step "Step 1: Prerequisites"
+  debug "checking git..."
   ensure_git
+  debug "checking node..."
   ensure_node
+  debug "checking postgres..."
   ensure_postgres
 
   step "Step 2: Clone"
+  debug "cloning repo..."
   clone_repo
 
   step "Step 3: Setup"
+  debug "running setup wizard..."
   run_setup
 
   echo ""
