@@ -254,7 +254,17 @@ install_postgres_local() {
 
 install_postgres_docker() {
   if ! has docker; then
-    fail "Docker not found. Install Docker first: https://docs.docker.com/get-docker/"
+    warn "Docker not found — installing..."
+    debug "downloading Docker install script..."
+    curl -fsSL https://get.docker.com | sh
+    debug "Docker install finished"
+    # Start Docker service
+    if has systemctl; then
+      sudo systemctl enable docker 2>/dev/null || true
+      sudo systemctl start docker 2>/dev/null || true
+    fi
+    has docker || fail "Docker installation failed. Install manually: https://docs.docker.com/get-docker/"
+    info "Docker installed"
   fi
 
   warn "Starting PostgreSQL in Docker..."
