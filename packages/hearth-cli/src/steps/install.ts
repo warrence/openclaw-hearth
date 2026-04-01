@@ -1,6 +1,33 @@
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
+
+function findOpenClaw(): string | null {
+  // Try which first
+  try {
+    const bin = execSync('which openclaw', { encoding: 'utf8', timeout: 5000 }).trim();
+    if (bin) return bin;
+  } catch { /* not in PATH */ }
+
+  // Check common nvm locations
+  const nvmDir = process.env.NVM_DIR || path.join(os.homedir(), '.nvm');
+  try {
+    // Find the active node version's bin
+    const nodeVersion = execSync('node -v', { encoding: 'utf8', timeout: 5000 }).trim();
+    const nvmBin = path.join(nvmDir, 'versions', 'node', nodeVersion, 'bin', 'openclaw');
+    if (fs.existsSync(nvmBin)) return nvmBin;
+  } catch { /* ignore */ }
+
+  // Check npm global prefix
+  try {
+    const prefix = execSync('npm prefix -g', { encoding: 'utf8', timeout: 5000 }).trim();
+    const npmBin = path.join(prefix, 'bin', 'openclaw');
+    if (fs.existsSync(npmBin)) return npmBin;
+  } catch { /* ignore */ }
+
+  return null;
+}
 
 function findProjectRoot(): string {
   let dir = process.cwd();
@@ -75,11 +102,11 @@ export async function installDependencies(): Promise<void> {
 
   // Install plugin into OpenClaw if openclaw CLI is available
   try {
-    const openclawBin = execSync('which openclaw', { encoding: 'utf8', timeout: 5000 }).trim();
+    const openclawBin = findOpenClaw();
     if (openclawBin) {
       console.log('  → Installing Hearth plugin into OpenClaw...');
       try {
-        execSync(`openclaw plugins install "${pluginDir}"`, { stdio: 'pipe', timeout: 30000 });
+        execSync(`${openclawBin} plugins install "${pluginDir}"`, { stdio: 'pipe', timeout: 30000 });
         console.log('  ✓ Hearth plugin installed in OpenClaw');
       } catch {
         console.log('  ⚠ Plugin install into OpenClaw failed — you may need to run manually:');
@@ -98,12 +125,12 @@ export async function installPlugin(): Promise<void> {
   const pluginDir = path.join(root, 'packages', 'openclaw-plugin-hearth-app');
 
   try {
-    const openclawBin = execSync('which openclaw', { encoding: 'utf8', timeout: 5000 }).trim();
-    if (!openclawBin) return;
+    const openclawBin = findOpenClaw();
+    if (!openclawBin) { console.log("  ⚠ OpenClaw binary not found — skip plugin install"); console.log(""); return; }
 
     // Check if already installed
     try {
-      const plugins = execSync('openclaw plugins list 2>/dev/null', { encoding: 'utf8', timeout: 10000 });
+      const plugins = execSync(`${openclawBin} plugins list 2>/dev/null`, { encoding: 'utf8', timeout: 10000 });
       if (plugins.includes('hearth-app')) {
         console.log('  ✓ Hearth plugin already installed in OpenClaw');
         return;
@@ -113,12 +140,12 @@ export async function installPlugin(): Promise<void> {
     }
 
     console.log('  🔌 Installing Hearth plugin into OpenClaw...');
-    execSync(`openclaw plugins install "${pluginDir}"`, { stdio: 'pipe', timeout: 30000 });
+    execSync(`${openclawBin} plugins install "${pluginDir}"`, { stdio: 'pipe', timeout: 30000 });
     console.log('  ✓ Hearth plugin installed');
 
     // Restart gateway to load the plugin
     try {
-      execSync('openclaw gateway restart', { stdio: 'pipe', timeout: 15000 });
+      execSync(`${openclawBin} gateway restart`, { stdio: 'pipe', timeout: 15000 });
       console.log('  ✓ OpenClaw gateway restarted');
     } catch {
       console.log('  ⚠ Could not restart gateway — restart OpenClaw manually to load the plugin');
