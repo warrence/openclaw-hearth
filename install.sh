@@ -12,9 +12,14 @@ NODE_VERSION="22"
 PG_VERSION="16"
 
 # When piped via curl | bash, stdin is the pipe not the terminal.
-# Redirect interactive reads from /dev/tty so prompts work.
+# Try to redirect from /dev/tty for interactive prompts.
+INTERACTIVE=true
 if [ ! -t 0 ]; then
-  exec < /dev/tty
+  if [ -e /dev/tty ]; then
+    exec < /dev/tty
+  else
+    INTERACTIVE=false
+  fi
 fi
 
 # Colors
@@ -142,15 +147,26 @@ ensure_postgres() {
     warn "PostgreSQL not found"
   fi
 
-  echo ""
-  echo "  PostgreSQL is required. How would you like to set it up?"
-  echo ""
-  echo "    1) Install locally (recommended)"
-  echo "    2) Use Docker container"
-  echo "    3) Skip — I'll set it up myself"
-  echo ""
-  read -rp "  Choose [1/2/3]: " pg_choice
-  echo ""
+  if [ "$INTERACTIVE" = true ]; then
+    echo ""
+    echo "  PostgreSQL is required. How would you like to set it up?"
+    echo ""
+    echo "    1) Install locally (recommended)"
+    echo "    2) Use Docker container"
+    echo "    3) Skip — I'll set it up myself"
+    echo ""
+    read -rp "  Choose [1/2/3]: " pg_choice
+    echo ""
+  else
+    # Non-interactive: try Docker first, fall back to local
+    if has docker; then
+      warn "Non-interactive mode — using Docker for PostgreSQL"
+      pg_choice=2
+    else
+      warn "Non-interactive mode — installing PostgreSQL locally"
+      pg_choice=1
+    fi
+  fi
 
   case "${pg_choice:-1}" in
     1) install_postgres_local ;;
