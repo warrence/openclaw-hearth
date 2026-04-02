@@ -57,6 +57,29 @@ export async function runStart(opts: { port: string; apiPort: string }): Promise
   console.log('🏠  Starting Hearth');
   console.log('─'.repeat(40));
 
+  // Start PostgreSQL if not running
+  try {
+    execSync('pg_isready -q', { timeout: 3000 });
+    console.log('  ✓ PostgreSQL running');
+  } catch {
+    console.log('  → Starting PostgreSQL...');
+    try {
+      // Find installed version
+      const pgVersions = fs.readdirSync('/etc/postgresql').filter(v => /^\d+$/.test(v));
+      if (pgVersions.length > 0) {
+        const ver = pgVersions.sort().reverse()[0];
+        execSync(`pg_ctlcluster ${ver} main start`, { stdio: 'pipe', timeout: 10000 });
+        console.log(`  ✓ PostgreSQL ${ver} started`);
+      } else {
+        // Try systemctl
+        execSync('sudo systemctl start postgresql 2>/dev/null || systemctl start postgresql 2>/dev/null', { stdio: 'pipe', timeout: 10000 });
+        console.log('  ✓ PostgreSQL started');
+      }
+    } catch {
+      console.log('  ⚠ Could not start PostgreSQL — start it manually');
+    }
+  }
+
   // Start OpenClaw gateway if not running
   try {
     const healthRes = await fetch(`http://127.0.0.1:18789/health`).catch(() => null);

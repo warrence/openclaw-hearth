@@ -18,7 +18,7 @@ export type HealthStatus = {
     schema: string;
   };
   openclaw: {
-    status: 'connected' | 'disconnected' | 'not_configured';
+    status: 'connected' | 'disconnected' | 'not_configured' | 'no_model';
     url?: string;
   };
 };
@@ -77,10 +77,39 @@ export class HealthService {
       const res = await fetch(`${url}/health`, {
         signal: AbortSignal.timeout(5000),
       });
-      if (res.ok) {
-        return { status: 'connected', url };
+      if (!res.ok) {
+        return { status: 'disconnected', url };
       }
-      return { status: 'disconnected', url };
+
+      // Check if a model/provider is configured by testing the responses endpoint
+      try {
+        const testRes = await fetch(`${url}/v1/responses`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${config!.token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: config!.defaultModel ?? 'default',
+            input: 'test',
+            max_output_tokens: 1,
+          }),
+          signal: AbortSignal.timeout(10000),
+        });
+        // 401/403 = auth issue but gateway works, 400 = model issue
+        // 404 or specific model errors = no model configured
+        if (testRes.status === 404 || testRes.status === 422) {
+          const body = await testRes.json().catch(() => ({})) as Record<string, unknown>;
+          const msg = String(body.error ?? body.message ?? '');
+          if (msg.includes('model') || msg.includes('provider') || msg.includes('No auth')) {
+            return { status: 'no_model', url };
+          }
+        }
+      } catch {
+        // Test failed but gateway is up — connected is fine
+      }
+
+      return { status: 'connected', url };
     } catch {
       return { status: 'disconnected', url };
     }

@@ -23,6 +23,13 @@
         <p>Start OpenClaw with <code>openclaw gateway start</code> on your server.</p>
       </div>
     </div>
+    <div v-else-if="openclawStatus === 'no_model'" class="openclaw-status-banner__content">
+      <span class="openclaw-status-banner__icon">🤖</span>
+      <div>
+        <strong>AI model not set up</strong>
+        <p>Run <code>openclaw setup</code> on your server to configure your AI provider and model.</p>
+      </div>
+    </div>
   </div>
 
   <div class="app-layout">
@@ -952,6 +959,8 @@ async function bootApp() {
       openclawStatus.value = 'not_configured'
     } else if (health?.openclaw?.status === 'disconnected') {
       openclawStatus.value = 'disconnected'
+    } else if (health?.openclaw?.status === 'no_model') {
+      openclawStatus.value = 'no_model'
     } else {
       openclawStatus.value = 'connected'
     }
