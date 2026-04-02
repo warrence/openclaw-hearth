@@ -11,6 +11,6 @@ import { RemindersService } from './reminders.service';
   imports: [DatabaseModule, forwardRef(() => ConversationsModule)],
   controllers: [RemindersController],
   providers: [RemindersRepository, RemindersService, ReminderSchedulerService],
-  exports: [RemindersService],
+  exports: [RemindersService, RemindersRepository],
 })
 export class RemindersModule {}
