@@ -98,7 +98,12 @@ export async function installDependencies(): Promise<void> {
   console.log('');
 }
 
-export async function installPlugin(): Promise<void> {
+export interface PluginTokens {
+  channelToken: string;
+  gatewayToken: string;
+}
+
+export async function installPlugin(): Promise<PluginTokens> {
   const root = findProjectRoot();
   const pluginDir = path.join(root, 'packages', 'openclaw-plugin-hearth-app');
   const configPath = path.join(os.homedir(), '.openclaw', 'openclaw.json');
@@ -169,29 +174,10 @@ export async function installPlugin(): Promise<void> {
     console.log('  ✓ Plugin configured in OpenClaw');
     console.log(`  ✓ Channel token: ${channelToken.slice(0, 8)}...`);
 
-    // 5. Save channel token + gateway token to Hearth .env
-    const envPath = path.join(root, 'apps', 'api-nest', '.env');
-    if (fs.existsSync(envPath)) {
-      let env = fs.readFileSync(envPath, 'utf-8');
+    const gatewayToken = config.gateway.auth.token;
 
-      // Update or add OPENCLAW_HEARTH_CHANNEL_TOKEN
-      if (env.includes('OPENCLAW_HEARTH_CHANNEL_TOKEN=')) {
-        env = env.replace(/OPENCLAW_HEARTH_CHANNEL_TOKEN=.*/g, `OPENCLAW_HEARTH_CHANNEL_TOKEN=${channelToken}`);
-      } else {
-        env += `\nOPENCLAW_HEARTH_CHANNEL_TOKEN=${channelToken}`;
-      }
-
-      // Update or add OPENCLAW_GATEWAY_TOKEN
-      const gatewayToken = config.gateway.auth.token;
-      if (env.includes('OPENCLAW_GATEWAY_TOKEN=')) {
-        env = env.replace(/OPENCLAW_GATEWAY_TOKEN=.*/g, `OPENCLAW_GATEWAY_TOKEN=${gatewayToken}`);
-      } else {
-        env += `\nOPENCLAW_GATEWAY_TOKEN=${gatewayToken}`;
-      }
-
-      fs.writeFileSync(envPath, env);
-      console.log('  ✓ Tokens saved to .env');
-    }
+    console.log('');
+    return { channelToken, gatewayToken };
 
   } catch (err: any) {
     console.log(`  ⚠ Plugin configuration failed: ${err.message}`);
@@ -199,6 +185,7 @@ export async function installPlugin(): Promise<void> {
   }
 
   console.log('');
+  return { channelToken: '', gatewayToken: '' };
 }
 
 export async function buildWebApp(): Promise<void> {

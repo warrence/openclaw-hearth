@@ -28,11 +28,11 @@ export async function runSetup(): Promise<void> {
   // Step 5: Agent config
   const agent = await setupAgent(openclaw);
 
-  // Step 6: Install Hearth plugin into OpenClaw
-  await installPlugin();
+  // Step 6: Install Hearth plugin into OpenClaw (generates channel token)
+  const pluginTokens = await installPlugin();
 
-  // Step 7: Write .env
-  await writeEnvFile({ db, openclaw, agent });
+  // Step 7: Write .env (includes all tokens)
+  await writeEnvFile({ db, openclaw, agent, pluginTokens });
 
   // Step 8: Build web app
   await buildWebApp();
