@@ -54,9 +54,18 @@ export async function runSetup(): Promise<void> {
 
   console.log('');
   console.log('━'.repeat(50));
-  console.log('✅  Hearth is ready!');
+  console.log('✅  Hearth is installed!');
   console.log('');
-  console.log('  Start:   npx hearth start');
+  console.log('  ⚠️  Before you start chatting, set up your AI provider:');
+  console.log('');
+  console.log('     openclaw setup');
+  console.log('');
+  console.log('  This will ask you to choose a model (e.g. OpenAI, Anthropic,');
+  console.log('  Google) and sign in. Without this, your assistant can\'t respond.');
+  console.log('');
+  console.log('  After that:');
+  console.log('');
+  console.log('  Start:   cd ~/hearth && npm run start');
   console.log('  Open:    http://localhost:9100');
   console.log('');
   console.log('  📖 Enhance your assistant:');
