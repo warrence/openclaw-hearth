@@ -68,7 +68,16 @@ export async function runSetup(): Promise<void> {
   console.log('');
   console.log('  2. Start OpenClaw + Hearth:');
   console.log('');
-  console.log('     openclaw gateway &');
+
+  // Detect systemd
+  const hasSystemd = (() => { try { require('child_process').execSync('systemctl --version', { stdio: 'pipe', timeout: 3000 }); return true; } catch { return false; } })();
+
+  if (hasSystemd) {
+    console.log('     openclaw gateway install   # install as system service');
+    console.log('     openclaw gateway start');
+  } else {
+    console.log('     openclaw gateway &          # no systemd — run in background');
+  }
   console.log('     cd ~/hearth && npm run start');
   console.log('');
   console.log('  3. Open in your browser:');

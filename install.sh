@@ -429,7 +429,12 @@ main() {
   echo ""
   echo -e "  2. Start OpenClaw + Hearth:"
   echo ""
-  echo -e "     ${CYAN}openclaw gateway &${NC}"
+  if has systemctl; then
+    echo -e "     ${CYAN}openclaw gateway install${NC}   # install as system service"
+    echo -e "     ${CYAN}openclaw gateway start${NC}"
+  else
+    echo -e "     ${CYAN}openclaw gateway &${NC}          # run in background"
+  fi
   echo -e "     ${CYAN}cd $HEARTH_DIR && npm run start${NC}"
   echo ""
   echo -e "  3. Open: ${CYAN}http://localhost:9100${NC}"
