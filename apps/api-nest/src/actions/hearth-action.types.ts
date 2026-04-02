@@ -9,9 +9,19 @@ export type ReminderAction = {
   critical?: boolean;
 };
 
+export type ListRemindersAction = {
+  type: "list-reminders";
+  all?: boolean; // owner only — list all household reminders
+};
+
+export type CancelReminderAction = {
+  type: "cancel-reminder";
+  id: number;
+};
+
 // Future types (define but not implement yet):
 export type ExpenseAction = { type: "expense"; amount: number; currency: string; category: string; description?: string; date?: string };
 export type HealthLogAction = { type: "health_log"; metric: string; value: number; unit: string; note?: string };
 export type TaskAction = { type: "task"; operation: string; title: string; assignee?: string; due_date?: string };
 
-export type HearthAction = ReminderAction | ExpenseAction | HealthLogAction | TaskAction;
+export type HearthAction = ReminderAction | ListRemindersAction | CancelReminderAction | ExpenseAction | HealthLogAction | TaskAction;

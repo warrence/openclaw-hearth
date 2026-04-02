@@ -2,7 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { ConversationsRepository } from '../conversations/conversations.repository';
 import { RemindersService } from '../reminders/reminders.service';
-import type { HearthAction, ReminderAction } from './hearth-action.types';
+import { RemindersRepository } from '../reminders/reminders.repository';
+import type { HearthAction, ReminderAction, ListRemindersAction, CancelReminderAction } from './hearth-action.types';
 
 @Injectable()
 export class HearthActionProcessorService {
@@ -10,6 +11,7 @@ export class HearthActionProcessorService {
 
   constructor(
     private readonly remindersService: RemindersService,
+    private readonly remindersRepository: RemindersRepository,
     private readonly conversationsRepository: ConversationsRepository,
   ) {}
 
@@ -70,6 +72,12 @@ export class HearthActionProcessorService {
       case 'reminder':
         await this.handleReminder(action, context);
         break;
+      case 'list-reminders':
+        await this.handleListReminders(action, context);
+        break;
+      case 'cancel-reminder':
+        await this.handleCancelReminder(action, context);
+        break;
       default:
         this.logger.warn(
           `[hearth-actions] Unimplemented action type: ${(action as HearthAction).type}`,
@@ -126,5 +134,49 @@ export class HearthActionProcessorService {
   private detectCriticalFromText(text: string): boolean {
     const critical = /\b(critical|important|urgent|must not miss|don'?t miss|keep remind|nag|persistent)\b/i;
     return critical.test(text);
+  }
+
+  private async handleListReminders(
+    action: ListRemindersAction,
+    context: { userId: number; conversationId: number; messageId: string },
+  ): Promise<void> {
+    // Check if user is owner by looking up the conversation
+    const conversation = await this.conversationsRepository.findConversationById(context.conversationId);
+    const isOwner = conversation?.user?.role === 'owner';
+
+    const reminders = await this.remindersRepository.listReminders({
+      userId: (isOwner && action.all) ? undefined : context.userId,
+      status: 'pending',
+    });
+
+    // Inject the results back — the agent will format them
+    // We append the data as a system note that the agent can read
+    this.logger.log(`[hearth-actions] Listed ${reminders.length} reminders for user=${context.userId}`);
+
+    // Store results so the outbound can inject them
+    (this as any).__lastListResult = reminders.map((r) => ({
+      id: r.id,
+      text: r.message_text,
+      fire_at: r.fire_at,
+      critical: r.critical,
+      user_id: r.user_id,
+    }));
+  }
+
+  private async handleCancelReminder(
+    action: CancelReminderAction,
+    context: { userId: number; conversationId: number; messageId: string },
+  ): Promise<void> {
+    const conversation = await this.conversationsRepository.findConversationById(context.conversationId);
+    const isOwner = conversation?.user?.role === 'owner';
+
+    const cancelled = await this.remindersRepository.cancelReminder(
+      action.id,
+      isOwner ? undefined : context.userId,
+    );
+
+    this.logger.log(
+      `[hearth-actions] Cancel reminder id=${action.id}: ${cancelled ? 'success' : 'not found or not authorized'}`,
+    );
   }
 }

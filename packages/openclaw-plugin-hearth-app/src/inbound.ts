@@ -278,6 +278,19 @@ REMINDER SCHEDULING: When user asks for a reminder, append this block to your re
 - Never mention the hearth-action block or any "Note:" about scheduling
 - Just reply naturally + silently include the block
 
+REMINDER LISTING: When user asks to see/list their reminders, append:
+\`\`\`hearth-action
+{"type":"list-reminders"}
+\`\`\`
+The system will inject the results. Present them in a friendly format (table or list).
+${event.userRole === 'owner' ? 'As owner, you can see ALL household reminders. Use {"type":"list-reminders","all":true} to see everyone\'s reminders.' : 'You can only see your own reminders.'}
+
+REMINDER CANCELLATION: When user asks to cancel/delete a reminder, append:
+\`\`\`hearth-action
+{"type":"cancel-reminder","id":<reminder_id>}
+\`\`\`
+${event.userRole === 'owner' ? 'As owner, you can cancel any reminder.' : 'You can only cancel your own reminders.'}
+
 IMPORTANT: Do not send intermediate progress messages like "I'm checking..." or "Let me look that up..." — complete your research/tool calls first, then send ONE final reply with the complete answer. Partial messages get cut off.
 
 `;

@@ -115,6 +115,59 @@ export class RemindersRepository implements OnModuleInit {
   }
 
   /** Check if user has replied in the conversation after the reminder fired */
+  async listReminders(params: { userId?: number; status?: string }): Promise<ReminderRecord[]> {
+    const conditions: string[] = [];
+    const values: unknown[] = [];
+    let idx = 1;
+
+    if (params.userId) {
+      conditions.push(`user_id = $${idx++}`);
+      values.push(params.userId);
+    }
+    if (params.status) {
+      conditions.push(`status = $${idx++}`);
+      values.push(params.status);
+    }
+
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const result = await this.db.query<any>(
+      `SELECT id, user_id, conversation_id, message_text, fire_at, status, critical, repeat_count, fired_at, acknowledged_at, created_at
+       FROM reminders ${where}
+       ORDER BY fire_at ASC`,
+      values,
+    );
+
+    return result.rows.map((r: any) => ({
+      id: r.id,
+      user_id: r.user_id,
+      conversation_id: r.conversation_id,
+      message_text: r.message_text,
+      fire_at: r.fire_at,
+      status: r.status,
+      source_message_id: null,
+      error: null,
+      created_at: r.created_at,
+      fired_at: r.fired_at,
+      critical: r.critical,
+      repeat_count: r.repeat_count,
+      acknowledged_at: r.acknowledged_at,
+    }));
+  }
+
+  async cancelReminder(id: number, userId?: number): Promise<boolean> {
+    const conditions = ['id = $1', "status = 'pending'"];
+    const values: unknown[] = [id];
+    if (userId) {
+      conditions.push('user_id = $2');
+      values.push(userId);
+    }
+    const result = await this.db.query(
+      `UPDATE reminders SET status = 'cancelled', updated_at = NOW() WHERE ${conditions.join(' AND ')}`,
+      values,
+    );
+    return (result.rowCount ?? 0) > 0;
+  }
+
   async hasUserRepliedSince(conversationId: number, sinceDate: Date | string): Promise<boolean> {
     const since = sinceDate instanceof Date ? sinceDate.toISOString() : String(sinceDate);
     const result = await this.db.query<{ count: string }>(
