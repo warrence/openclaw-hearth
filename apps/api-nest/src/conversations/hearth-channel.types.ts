@@ -45,6 +45,7 @@ export interface HearthAppInboundEvent {
   userRole?: string;
   /** Household members for cross-member reminders */
   householdMembers?: Array<{ name: string; slug: string }>;
+  pendingReminders?: Array<{ id: number; text: string; fire_at: string; critical: boolean; user_id: number }>;
   /** Think level directive (off | minimal | low | medium | high | xhigh | adaptive) */
   thinkLevel?: string;
   /** Whether to enable extended reasoning */

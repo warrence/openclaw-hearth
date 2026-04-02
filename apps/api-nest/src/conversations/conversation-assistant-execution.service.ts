@@ -21,6 +21,7 @@ import { ConversationMessageStreamEvent } from './dto/send-conversation-message.
 import { EventBusService } from '../events/event-bus.service';
 import { HearthActionProcessorService } from '../actions/hearth-action-processor.service';
 import { RemindersService } from '../reminders/reminders.service';
+import { RemindersRepository } from '../reminders/reminders.repository';
 import { OpenClawConfigWriterService } from '../settings/openclaw-config-writer.service';
 import { detectImageIntent, ImageGenerationService } from './image-generation.service';
 
@@ -62,6 +63,7 @@ export class ConversationAssistantExecutionService {
     private readonly streamRegistry: ConversationStreamRegistryService,
     @Inject(forwardRef(() => RemindersService))
     private readonly remindersService: RemindersService,
+    private readonly remindersRepository: RemindersRepository,
     private readonly actionProcessor: HearthActionProcessorService,
     private readonly openClawConfigWriter: OpenClawConfigWriterService,
     private readonly imageGenerationService: ImageGenerationService,
@@ -462,6 +464,7 @@ export class ConversationAssistantExecutionService {
       sentAt: new Date().toISOString(),
       userRole: conversation.user?.role ?? 'member',
       householdMembers: await this.getHouseholdMembers(),
+      pendingReminders: await this.getPendingReminders(conversation.user_id, conversation.user?.role),
       modelPreset:
         (conversation.model_preset as 'fast' | 'deep' | null) ??
         undefined,
@@ -475,6 +478,28 @@ export class ConversationAssistantExecutionService {
       return result
         .filter((u) => u.slug && u.name)
         .map((u) => ({ name: u.name, slug: u.slug }));
+    } catch {
+      return [];
+    }
+  }
+
+  private async getPendingReminders(
+    userId: number,
+    userRole?: string,
+  ): Promise<Array<{ id: number; text: string; fire_at: string; critical: boolean; user_id: number }>> {
+    try {
+      const isOwner = userRole === 'owner';
+      const reminders = await this.remindersRepository.listReminders({
+        userId: isOwner ? undefined : userId,
+        status: 'pending',
+      });
+      return reminders.map((r) => ({
+        id: r.id,
+        text: r.message_text,
+        fire_at: r.fire_at instanceof Date ? r.fire_at.toISOString() : String(r.fire_at),
+        critical: r.critical,
+        user_id: r.user_id,
+      }));
     } catch {
       return [];
     }
