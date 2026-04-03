@@ -5,6 +5,7 @@ import { setupAgent } from './agent';
 import { writeEnvFile } from './env';
 import { installDependencies, buildWebApp, installPlugin } from './install';
 import { runPersonalize } from './personalize';
+import { setupNetwork } from './network';
 import inquirer from 'inquirer';
 
 export async function runSetup(): Promise<void> {
@@ -36,6 +37,9 @@ export async function runSetup(): Promise<void> {
 
   // Step 8: Build web app
   await buildWebApp();
+
+  // Step 9: Network & HTTPS
+  const network = await setupNetwork();
 
   // Optional: Personalize (pass in the name already chosen)
   console.log('');
@@ -82,7 +86,7 @@ export async function runSetup(): Promise<void> {
   console.log('');
   console.log('  3. Open in your browser:');
   console.log('');
-  console.log('     http://localhost:9100');
+  console.log(`     ${network.publicUrl}`);
   console.log('');
   console.log('  📖 Enhance your assistant:');
   console.log('     docs/enhance-your-assistant.md');
