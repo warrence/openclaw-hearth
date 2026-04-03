@@ -33,6 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.manageService = manageService;
 exports.runInstallService = runInstallService;
 const child_process_1 = require("child_process");
 const fs = __importStar(require("fs"));
@@ -189,7 +190,112 @@ function createLaunchdService(root) {
     console.log(`    launchctl kill SIGTERM gui/$(id -u)/${label}    # Stop`);
     console.log(`    tail -f ${logPath}                              # View logs`);
 }
-// ─── Main ───
+// ─── Manage ───
+async function manageService(action) {
+    const platform = os.platform();
+    if (platform === 'linux') {
+        manageSystemd(action);
+    }
+    else if (platform === 'darwin') {
+        manageLaunchd(action);
+    }
+    else {
+        console.error('Unsupported platform. Use pm2 to manage the service.');
+        process.exit(1);
+    }
+}
+function manageSystemd(action) {
+    const actions = {
+        start: () => {
+            try {
+                (0, child_process_1.execSync)('sudo systemctl start hearth', { stdio: 'inherit', timeout: 10000 });
+                console.log('');
+                console.log('🏠 Hearth started');
+                // Show status
+                try {
+                    (0, child_process_1.execSync)('systemctl status hearth --no-pager -l', { stdio: 'inherit', timeout: 5000 });
+                }
+                catch { /* ignore */ }
+            }
+            catch {
+                console.error('Failed to start. Check: sudo journalctl -u hearth -n 20');
+                process.exit(1);
+            }
+        },
+        stop: () => {
+            (0, child_process_1.execSync)('sudo systemctl stop hearth', { stdio: 'inherit', timeout: 10000 });
+            console.log('🏠 Hearth stopped');
+        },
+        restart: () => {
+            (0, child_process_1.execSync)('sudo systemctl restart hearth', { stdio: 'inherit', timeout: 10000 });
+            console.log('🏠 Hearth restarted');
+            try {
+                (0, child_process_1.execSync)('systemctl status hearth --no-pager -l', { stdio: 'inherit', timeout: 5000 });
+            }
+            catch { /* ignore */ }
+        },
+        status: () => {
+            try {
+                (0, child_process_1.execSync)('systemctl status hearth --no-pager -l', { stdio: 'inherit', timeout: 5000 });
+            }
+            catch { /* systemctl status returns non-zero for inactive */ }
+        },
+        logs: () => {
+            (0, child_process_1.execSync)('journalctl -u hearth -f --no-pager', { stdio: 'inherit' });
+        },
+    };
+    const handler = actions[action];
+    if (!handler) {
+        console.error(`Unknown action: ${action}`);
+        console.error('Valid actions: start | stop | restart | status | logs');
+        process.exit(1);
+    }
+    handler();
+}
+function manageLaunchd(action) {
+    const label = 'ai.hearth.app';
+    const plistPath = path.join(os.homedir(), 'Library', 'LaunchAgents', `${label}.plist`);
+    const logPath = path.join(os.homedir(), 'Library', 'Logs', 'hearth.log');
+    const uid = (0, child_process_1.execSync)('id -u', { stdio: 'pipe', timeout: 3000 }).toString().trim();
+    const actions = {
+        start: () => {
+            try {
+                (0, child_process_1.execSync)(`launchctl bootstrap gui/${uid} ${plistPath}`, { stdio: 'pipe', timeout: 5000 });
+            }
+            catch { /* might already be loaded */ }
+            (0, child_process_1.execSync)(`launchctl kickstart gui/${uid}/${label}`, { stdio: 'pipe', timeout: 5000 });
+            console.log('🏠 Hearth started');
+        },
+        stop: () => {
+            (0, child_process_1.execSync)(`launchctl kill SIGTERM gui/${uid}/${label}`, { stdio: 'pipe', timeout: 5000 });
+            console.log('🏠 Hearth stopped');
+        },
+        restart: () => {
+            (0, child_process_1.execSync)(`launchctl kickstart -k gui/${uid}/${label}`, { stdio: 'pipe', timeout: 5000 });
+            console.log('🏠 Hearth restarted');
+        },
+        status: () => {
+            try {
+                const out = (0, child_process_1.execSync)(`launchctl print gui/${uid}/${label}`, { stdio: 'pipe', timeout: 5000 }).toString();
+                console.log(out);
+            }
+            catch {
+                console.log('Hearth service is not loaded');
+            }
+        },
+        logs: () => {
+            (0, child_process_1.execSync)(`tail -f ${logPath}`, { stdio: 'inherit' });
+        },
+    };
+    const handler = actions[action];
+    if (!handler) {
+        console.error(`Unknown action: ${action}`);
+        console.error('Valid actions: start | stop | restart | status | logs');
+        process.exit(1);
+    }
+    handler();
+}
+// ─── Install ───
 async function runInstallService() {
     console.log('');
     console.log('🔧  Install Hearth as a background service');

@@ -50,4 +50,13 @@ program
     await runInstallService();
   });
 
+program
+  .command('service')
+  .description('Manage the Hearth background service')
+  .argument('<action>', 'start | stop | restart | status | logs')
+  .action(async (action: string) => {
+    const { manageService } = await import('./steps/service');
+    await manageService(action);
+  });
+
 program.parse();

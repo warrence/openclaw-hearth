@@ -163,7 +163,112 @@ function createLaunchdService(root: string): void {
   console.log(`    tail -f ${logPath}                              # View logs`);
 }
 
-// ─── Main ───
+// ─── Manage ───
+
+export async function manageService(action: string): Promise<void> {
+  const platform = os.platform();
+
+  if (platform === 'linux') {
+    manageSystemd(action);
+  } else if (platform === 'darwin') {
+    manageLaunchd(action);
+  } else {
+    console.error('Unsupported platform. Use pm2 to manage the service.');
+    process.exit(1);
+  }
+}
+
+function manageSystemd(action: string): void {
+  const actions: Record<string, () => void> = {
+    start: () => {
+      try {
+        execSync('sudo systemctl start hearth', { stdio: 'inherit', timeout: 10000 });
+        console.log('');
+        console.log('🏠 Hearth started');
+        // Show status
+        try {
+          execSync('systemctl status hearth --no-pager -l', { stdio: 'inherit', timeout: 5000 });
+        } catch { /* ignore */ }
+      } catch {
+        console.error('Failed to start. Check: sudo journalctl -u hearth -n 20');
+        process.exit(1);
+      }
+    },
+    stop: () => {
+      execSync('sudo systemctl stop hearth', { stdio: 'inherit', timeout: 10000 });
+      console.log('🏠 Hearth stopped');
+    },
+    restart: () => {
+      execSync('sudo systemctl restart hearth', { stdio: 'inherit', timeout: 10000 });
+      console.log('🏠 Hearth restarted');
+      try {
+        execSync('systemctl status hearth --no-pager -l', { stdio: 'inherit', timeout: 5000 });
+      } catch { /* ignore */ }
+    },
+    status: () => {
+      try {
+        execSync('systemctl status hearth --no-pager -l', { stdio: 'inherit', timeout: 5000 });
+      } catch { /* systemctl status returns non-zero for inactive */ }
+    },
+    logs: () => {
+      execSync('journalctl -u hearth -f --no-pager', { stdio: 'inherit' });
+    },
+  };
+
+  const handler = actions[action];
+  if (!handler) {
+    console.error(`Unknown action: ${action}`);
+    console.error('Valid actions: start | stop | restart | status | logs');
+    process.exit(1);
+  }
+  handler();
+}
+
+function manageLaunchd(action: string): void {
+  const label = 'ai.hearth.app';
+  const plistPath = path.join(os.homedir(), 'Library', 'LaunchAgents', `${label}.plist`);
+  const logPath = path.join(os.homedir(), 'Library', 'Logs', 'hearth.log');
+  const uid = execSync('id -u', { stdio: 'pipe', timeout: 3000 }).toString().trim();
+
+  const actions: Record<string, () => void> = {
+    start: () => {
+      try {
+        execSync(`launchctl bootstrap gui/${uid} ${plistPath}`, { stdio: 'pipe', timeout: 5000 });
+      } catch { /* might already be loaded */ }
+      execSync(`launchctl kickstart gui/${uid}/${label}`, { stdio: 'pipe', timeout: 5000 });
+      console.log('🏠 Hearth started');
+    },
+    stop: () => {
+      execSync(`launchctl kill SIGTERM gui/${uid}/${label}`, { stdio: 'pipe', timeout: 5000 });
+      console.log('🏠 Hearth stopped');
+    },
+    restart: () => {
+      execSync(`launchctl kickstart -k gui/${uid}/${label}`, { stdio: 'pipe', timeout: 5000 });
+      console.log('🏠 Hearth restarted');
+    },
+    status: () => {
+      try {
+        const out = execSync(`launchctl print gui/${uid}/${label}`, { stdio: 'pipe', timeout: 5000 }).toString();
+        console.log(out);
+      } catch {
+        console.log('Hearth service is not loaded');
+      }
+    },
+    logs: () => {
+      execSync(`tail -f ${logPath}`, { stdio: 'inherit' });
+    },
+  };
+
+  const handler = actions[action];
+  if (!handler) {
+    console.error(`Unknown action: ${action}`);
+    console.error('Valid actions: start | stop | restart | status | logs');
+    process.exit(1);
+  }
+  handler();
+}
+
+// ─── Install ───
 
 export async function runInstallService(): Promise<void> {
   console.log('');
