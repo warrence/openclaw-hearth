@@ -106,6 +106,25 @@ Each household member gets their own profile with PIN authentication. Conversati
 
 ## Quick Start
 
+### Prerequisites
+
+You need [OpenClaw](https://github.com/openclaw/openclaw) installed and configured with at least one AI provider before running Hearth.
+
+**If you haven't set up OpenClaw yet:**
+
+```bash
+# Install OpenClaw
+npm install -g openclaw
+
+# Configure your AI provider (interactive — adds API keys, model defaults, etc.)
+openclaw config
+
+# Start the OpenClaw gateway
+openclaw gateway start
+```
+
+> Hearth talks to OpenClaw for all AI capabilities. Make sure `openclaw gateway` is running before starting Hearth.
+
 ### One-Line Install (macOS / Linux)
 
 ```bash
@@ -135,6 +154,12 @@ Open `http://localhost:9100` in your browser.
 If you prefer to install prerequisites yourself:
 
 ```bash
+# 1. Install and configure OpenClaw (if not already done)
+npm install -g openclaw
+openclaw config          # Set up your AI provider
+openclaw gateway start   # Start the gateway
+
+# 2. Clone and set up Hearth
 git clone https://github.com/warrence/openclaw-hearth.git
 cd openclaw-hearth
 npx hearth setup
