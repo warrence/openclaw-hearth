@@ -1515,7 +1515,7 @@ export class ConversationAssistantExecutionService {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: config?.fastModel || 'openclaw',
+          model: 'openclaw',
           input: `Generate a short conversation title (3-6 words max) from this message. No quotes, no punctuation at the end. Just the title.\n\nMessage: ${prompt}`,
           stream: false,
           max_output_tokens: 20,
