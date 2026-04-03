@@ -12,6 +12,12 @@
   Multi-conversation chat · Owner/member permissions · Reminders · HTTPS · Dark theme PWA
 </p>
 
+<p align="center">
+  <strong>⚠️ Early Release — Use at your own risk</strong><br/>
+  <sub>Hearth is under active development. Features may change, break, or disappear between updates.<br/>
+  Not recommended for production use yet. Back up your data regularly.</sub>
+</p>
+
 ---
 
 ## Demo
