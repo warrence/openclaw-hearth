@@ -70,23 +70,16 @@ export async function runSetup(): Promise<void> {
   console.log('     Anthropic, Google) and sign in with OAuth.');
   console.log('     Without this, your assistant can\'t respond.');
   console.log('');
-  console.log('  2. Install as a background service (auto-start on boot):');
+  console.log('  2. Start the OpenClaw gateway:');
+  console.log('');
+  console.log('     openclaw gateway start');
+  console.log('');
+  console.log('  3. Install Hearth as a background service (auto-start on boot):');
   console.log('');
   console.log('     npx hearth install-service');
+  console.log('     npx hearth service start');
   console.log('');
-  console.log('  3. Or start manually:');
-  console.log('');
-
-  // Detect systemd
-  const hasSystemd = (() => { try { require('child_process').execSync('systemctl --version', { stdio: 'pipe', timeout: 3000 }); return true; } catch { return false; } })();
-
-  if (hasSystemd) {
-    console.log('     openclaw gateway install   # install as system service');
-    console.log('     openclaw gateway start');
-  } else {
-    console.log('     openclaw gateway &          # no systemd — run in background');
-  }
-  console.log('     cd ~/hearth && npm run start');
+  console.log('     Or start manually: npx hearth start');
   console.log('');
   console.log('  4. Open in your browser:');
   console.log('');
