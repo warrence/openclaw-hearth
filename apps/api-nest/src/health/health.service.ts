@@ -90,11 +90,11 @@ export class HealthService {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: config!.defaultModel ?? 'default',
+            model: 'openclaw',
             input: 'test',
             max_output_tokens: 1,
           }),
-          signal: AbortSignal.timeout(10000),
+          signal: AbortSignal.timeout(3000),
         });
         // 401/403 = auth issue but gateway works, 400 = model issue
         // 404 or specific model errors = no model configured

@@ -959,12 +959,20 @@ async function bootApp() {
       authChecked.value = true
       enterLoginState()
     }
-  }, 10000)
+  }, 5000)
 
   try {
-    // Check OpenClaw health
-    try {
-      const health = await getHealthStatus()
+    // Run all boot calls in parallel — no reason to wait for each one
+    const [healthResult, displayInfoResult, , authResult] = await Promise.allSettled([
+      getHealthStatus(),
+      getAgentDisplayInfo(),
+      loadProfiles(),
+      getMe(),
+    ])
+
+    // Process health
+    if (healthResult.status === 'fulfilled') {
+      const health = healthResult.value
       if (health?.openclaw?.status === 'not_configured') {
         openclawStatus.value = 'not_configured'
       } else if (health?.openclaw?.status === 'disconnected') {
@@ -974,36 +982,33 @@ async function bootApp() {
       } else {
         openclawStatus.value = 'connected'
       }
-    } catch {
+    } else {
       openclawStatus.value = 'unknown'
     }
 
-    // Fetch agent display name (public endpoint — no auth needed)
-    try {
-      const displayInfo = await getAgentDisplayInfo()
+    // Process agent display name
+    if (displayInfoResult.status === 'fulfilled') {
+      const displayInfo = displayInfoResult.value
       if (displayInfo?.agentDisplayName) {
         agentDisplayName.value = displayInfo.agentDisplayName
         agentNameInput.value = displayInfo.agentDisplayName
         agentDefaultName.value = displayInfo.agentDisplayName
       }
-    } catch { /* fallback to default */ }
+    }
 
-    // Always load profiles (public endpoint — needed for login chooser + switch menu)
-    await loadProfiles()
-
-    try {
-      const user = await getMe()
+    // Process auth
+    if (authResult.status === 'fulfilled' && authResult.value) {
+      const user = authResult.value
       currentUser.value = user
       selectedProfileId.value = user.id
       // watch(selectedProfileId) triggers loadConversations automatically
       await syncPushSubscription(user.id)
       connectEventStream(user.id)
-    } catch {
-      // Not authenticated — show login dialog
+    } else {
       enterLoginState()
-    } finally {
-      authChecked.value = true
     }
+
+    authChecked.value = true
   } finally {
     clearTimeout(bootTimeout)
   }
