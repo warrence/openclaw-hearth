@@ -122,15 +122,8 @@ function installCaddy() {
 }
 function writeCaddyfile(domain, httpsPort, webPort, apiPort) {
     const caddyfilePath = path.join(os.homedir(), 'hearth', 'Caddyfile');
-    // If using IP (no domain), use self-signed HTTPS
-    const isIp = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(domain);
     const portSuffix = httpsPort !== 443 ? `:${httpsPort}` : '';
-    let content;
-    if (isIp) {
-        // IP-based: use automatic self-signed cert
-        content = `${domain}${portSuffix} {
-  tls internal
-
+    const content = `${domain}${portSuffix} {
   handle /api/* {
     reverse_proxy localhost:${apiPort}
   }
@@ -144,24 +137,6 @@ function writeCaddyfile(domain, httpsPort, webPort, apiPort) {
   }
 }
 `;
-    }
-    else {
-        // Domain-based: Let's Encrypt auto-HTTPS
-        content = `${domain}${portSuffix} {
-  handle /api/* {
-    reverse_proxy localhost:${apiPort}
-  }
-
-  handle /storage/* {
-    reverse_proxy localhost:${apiPort}
-  }
-
-  handle {
-    reverse_proxy localhost:${webPort}
-  }
-}
-`;
-    }
     const dir = path.dirname(caddyfilePath);
     if (!fs.existsSync(dir))
         fs.mkdirSync(dir, { recursive: true });
@@ -174,28 +149,27 @@ async function setupNetwork() {
     // Detect addresses
     const localIp = detectLocalIp();
     const publicIp = detectPublicIp();
-    const hostname = detectHostname();
-    const port443Available = isPortAvailable(443);
     if (publicIp)
         console.log(`  → Public IP detected: ${publicIp}`);
     if (localIp !== '127.0.0.1')
         console.log(`  → Local IP: ${localIp}`);
-    if (hostname)
-        console.log(`  → Hostname: ${hostname}`);
     console.log('');
-    // Ask about HTTPS
-    const { wantHttps } = await inquirer_1.default.prompt([
+    // Ask if they have a domain
+    const { hasDomain } = await inquirer_1.default.prompt([
         {
             type: 'confirm',
-            name: 'wantHttps',
-            message: 'Set up HTTPS with Caddy? (free automatic certificates)',
-            default: true,
+            name: 'hasDomain',
+            message: 'Do you have a domain pointing to this server? (for free HTTPS)',
+            default: false,
         },
     ]);
-    if (!wantHttps) {
-        const accessUrl = publicIp ? `http://${publicIp}:9100` : `http://${localIp}:9100`;
+    if (!hasDomain) {
+        const accessIp = publicIp || localIp;
+        const accessUrl = `http://${accessIp}:9100`;
         console.log('');
         console.log(`  ✓ Hearth will be available at: ${accessUrl}`);
+        console.log('');
+        console.log('  💡 To add HTTPS later, point a domain to this server and re-run setup.');
         console.log('');
         return {
             publicUrl: accessUrl,
@@ -204,41 +178,32 @@ async function setupNetwork() {
             httpPort: 9100,
         };
     }
-    // Build address choices
-    const choices = [];
-    if (hostname)
-        choices.push({ name: `${hostname} (hostname — recommended for Let's Encrypt)`, value: hostname });
-    if (publicIp)
-        choices.push({ name: `${publicIp} (public IP — self-signed cert)`, value: publicIp });
-    if (localIp !== '127.0.0.1')
-        choices.push({ name: `${localIp} (local network)`, value: localIp });
-    choices.push({ name: 'Enter a custom domain or IP', value: '__custom__' });
-    const { selectedAddress } = await inquirer_1.default.prompt([
+    // Get the domain
+    const { domain: inputDomain } = await inquirer_1.default.prompt([
         {
-            type: 'list',
-            name: 'selectedAddress',
-            message: 'Which address should Hearth use?',
-            choices,
+            type: 'input',
+            name: 'domain',
+            message: 'Enter your domain (e.g. hearth.example.com):',
+            validate: (v) => {
+                const d = v.trim();
+                if (!d)
+                    return 'Required';
+                if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(d))
+                    return 'Enter a domain, not an IP';
+                if (!d.includes('.'))
+                    return 'Enter a valid domain (e.g. hearth.example.com)';
+                return true;
+            },
         },
     ]);
-    let domain = selectedAddress;
-    if (domain === '__custom__') {
-        const { customDomain } = await inquirer_1.default.prompt([
-            {
-                type: 'input',
-                name: 'customDomain',
-                message: 'Enter your domain or IP:',
-                validate: (v) => v.trim().length > 0 || 'Required',
-            },
-        ]);
-        domain = customDomain.trim();
-    }
+    const domain = inputDomain.trim();
+    const port443Available = isPortAvailable(443);
     // Ask for HTTPS port
     const { httpsPort } = await inquirer_1.default.prompt([
         {
             type: 'input',
             name: 'httpsPort',
-            message: `HTTPS port:`,
+            message: 'HTTPS port:',
             default: port443Available ? '443' : '8443',
             validate: (v) => {
                 const n = Number(v);
@@ -282,10 +247,14 @@ async function setupNetwork() {
     try {
         // Stop existing Caddy if running
         try {
-            (0, child_process_1.execSync)('caddy stop 2>/dev/null', { stdio: 'pipe', timeout: 5000 });
+            (0, child_process_1.execSync)('sudo caddy stop 2>/dev/null', { stdio: 'pipe', timeout: 5000 });
         }
         catch { /* ignore */ }
-        (0, child_process_1.execSync)(`caddy start --config ${caddyfilePath}`, { stdio: 'pipe', timeout: 10000 });
+        try {
+            (0, child_process_1.execSync)('sudo systemctl stop caddy 2>/dev/null', { stdio: 'pipe', timeout: 5000 });
+        }
+        catch { /* ignore */ }
+        (0, child_process_1.execSync)(`sudo caddy start --config ${caddyfilePath}`, { stdio: 'pipe', timeout: 10000 });
         console.log('  ✓ Caddy started');
     }
     catch (err) {
