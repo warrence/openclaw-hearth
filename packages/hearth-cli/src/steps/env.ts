@@ -18,6 +18,9 @@ export async function writeEnvFile(params: EnvParams): Promise<void> {
   // Generate a random session secret
   const sessionSecret = `hearth:${randomHex(32)}`;
 
+  // Generate VAPID keys for web push notifications
+  const vapidKeys = generateVapidKeys();
+
   // Use plugin tokens if available (they override openclaw detection)
   const gatewayToken = pluginTokens?.gatewayToken || openclaw.token;
   const channelToken = pluginTokens?.channelToken || '';
@@ -51,6 +54,11 @@ DATABASE_PASSWORD=${db.password}
 DATABASE_SCHEMA=public
 DATABASE_SSL=false
 DATABASE_AUTO_RUN_MIGRATIONS=false
+
+# Web Push Notifications (VAPID)
+WEBPUSH_VAPID_PUBLIC_KEY=${vapidKeys.publicKey}
+WEBPUSH_VAPID_PRIVATE_KEY=${vapidKeys.privateKey}
+WEBPUSH_VAPID_SUBJECT=mailto:hearth@localhost
 `;
 
   // Write to apps/api-nest/.env
@@ -103,4 +111,13 @@ function findProjectRoot(): string {
 function randomHex(bytes: number): string {
   const { randomBytes } = require('crypto');
   return randomBytes(bytes).toString('hex');
+}
+
+function generateVapidKeys(): { publicKey: string; privateKey: string } {
+  const crypto = require('crypto');
+  const ecdh = crypto.createECDH('prime256v1');
+  ecdh.generateKeys();
+  const publicKey = ecdh.getPublicKey('base64url') as string;
+  const privateKey = ecdh.getPrivateKey('base64url') as string;
+  return { publicKey, privateKey };
 }
