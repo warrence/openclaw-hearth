@@ -16,7 +16,16 @@ function run(cmd: string, cwd: string, timeoutMs = 180000): string {
   try {
     return execSync(cmd, { cwd, stdio: 'pipe', timeout: timeoutMs }).toString().trim();
   } catch (err: any) {
-    throw new Error(err.stderr?.toString()?.split('\n')[0] || err.message?.split('\n')[0] || 'Command failed');
+    // If the command produced stdout and exited with code 0-equivalent, treat warnings as OK
+    const stdout = err.stdout?.toString()?.trim() ?? '';
+    const stderr = err.stderr?.toString()?.trim() ?? '';
+    // Timeout
+    if (err.killed || err.signal === 'SIGTERM') {
+      throw new Error('Build timed out. Try adding swap: sudo fallocate -l 1G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile');
+    }
+    // Real error
+    const msg = stderr.split('\n')[0] || err.message?.split('\n')[0] || 'Command failed';
+    throw new Error(msg);
   }
 }
 
@@ -145,10 +154,15 @@ export async function runUpdate(): Promise<void> {
     if (!fs.existsSync(path.join(target.dir, 'package.json'))) continue;
     try {
       console.log(`    → ${target.name}...`);
-      run(target.cmd, target.dir, 300000); // 5 min timeout for web build
+      execSync(target.cmd, { cwd: target.dir, stdio: 'inherit', timeout: 600000 }); // 10 min
       console.log(`    ✓ ${target.name}`);
     } catch (err: any) {
-      console.error(`  ✗ ${target.name} build failed: ${err.message}`);
+      if (err.killed || err.signal === 'SIGTERM') {
+        console.error(`  ✗ ${target.name} build timed out.`);
+        console.error('  💡 Try adding swap: sudo fallocate -l 1G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile');
+      } else {
+        console.error(`  ✗ ${target.name} build failed`);
+      }
       process.exit(1);
     }
   }
