@@ -962,17 +962,8 @@ async function bootApp() {
   }, 5000)
 
   try {
-    // Run all boot calls in parallel — no reason to wait for each one
-    const [healthResult, displayInfoResult, , authResult] = await Promise.allSettled([
-      getHealthStatus(),
-      getAgentDisplayInfo(),
-      loadProfiles(),
-      getMe(),
-    ])
-
-    // Process health
-    if (healthResult.status === 'fulfilled') {
-      const health = healthResult.value
+    // Fire-and-forget: health check runs in background — don't block boot
+    getHealthStatus().then((health) => {
       if (health?.openclaw?.status === 'not_configured') {
         openclawStatus.value = 'not_configured'
       } else if (health?.openclaw?.status === 'disconnected') {
@@ -982,9 +973,16 @@ async function bootApp() {
       } else {
         openclawStatus.value = 'connected'
       }
-    } else {
+    }).catch(() => {
       openclawStatus.value = 'unknown'
-    }
+    })
+
+    // Critical boot calls in parallel — these are fast
+    const [displayInfoResult, , authResult] = await Promise.allSettled([
+      getAgentDisplayInfo(),
+      loadProfiles(),
+      getMe(),
+    ])
 
     // Process agent display name
     if (displayInfoResult.status === 'fulfilled') {
