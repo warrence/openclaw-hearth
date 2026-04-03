@@ -66,7 +66,7 @@ export async function setupAgent(openclaw: OpenClawConfig): Promise<AgentConfig>
     console.log('');
   }
 
-  const answers = await inquirer.prompt([
+  const { agentId } = await inquirer.prompt([
     {
       type: allAgents.length > 1 ? 'list' : 'input',
       name: 'agentId',
@@ -74,19 +74,25 @@ export async function setupAgent(openclaw: OpenClawConfig): Promise<AgentConfig>
       choices: allAgents.length > 1 ? allAgents : undefined,
       default: defaultAgent,
     },
+  ]);
+
+  // Default display name: capitalize the agent ID (e.g. "main" → "Main", "aeris" → "Aeris")
+  const defaultDisplayName = agentId.charAt(0).toUpperCase() + agentId.slice(1);
+
+  const { displayName } = await inquirer.prompt([
     {
       type: 'input',
       name: 'displayName',
-      message: 'Display name for the agent in the app:',
-      default: 'Assistant',
+      message: 'Display name for the agent in the app (e.g. Aeris, Jarvis, Nova):',
+      default: defaultDisplayName,
     },
   ]);
 
-  console.log(`  ✓ Agent: ${answers.displayName} (${answers.agentId})`);
+  console.log(`  ✓ Agent: ${displayName} (${agentId})`);
   console.log('');
 
   return {
-    agentId: answers.agentId,
-    displayName: answers.displayName,
+    agentId,
+    displayName,
   };
 }
