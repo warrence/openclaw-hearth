@@ -4,6 +4,7 @@ import { runSetup } from './steps/setup';
 import { runStart } from './steps/start';
 import { runPersonalize } from './steps/personalize';
 import { runUpdate } from './steps/update';
+import { runInstallService } from './steps/service';
 
 const program = new Command();
 
@@ -40,6 +41,13 @@ program
   .description('Update Hearth to the latest version')
   .action(async () => {
     await runUpdate();
+  });
+
+program
+  .command('install-service')
+  .description('Install Hearth as a background service (systemd/launchd)')
+  .action(async () => {
+    await runInstallService();
   });
 
 program.parse();

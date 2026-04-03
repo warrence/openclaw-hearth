@@ -53,11 +53,11 @@ openclaw config
 # Start the gateway
 openclaw gateway start
 
-# Start Hearth
-cd ~/hearth && npx hearth start
+# Install as background service (auto-start on boot)
+cd ~/hearth && npx hearth install-service
 ```
 
-The setup wizard handles everything: Node.js, PostgreSQL, OpenClaw, dependencies, owner account, agent config, HTTPS, and building the app.
+The setup wizard handles everything: Node.js, PostgreSQL, OpenClaw, dependencies, owner account, agent config, HTTPS, and building the app. The service installer configures **systemd** (Linux) or **launchd** (macOS) so Hearth starts automatically on boot.
 
 > **HTTPS:** During setup, Hearth offers to install [Caddy](https://caddyserver.com) for automatic HTTPS with free Let's Encrypt certificates.
 

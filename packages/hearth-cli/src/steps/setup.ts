@@ -70,7 +70,11 @@ export async function runSetup(): Promise<void> {
   console.log('     Anthropic, Google) and sign in with OAuth.');
   console.log('     Without this, your assistant can\'t respond.');
   console.log('');
-  console.log('  2. Start OpenClaw + Hearth:');
+  console.log('  2. Install as a background service (auto-start on boot):');
+  console.log('');
+  console.log('     npx hearth install-service');
+  console.log('');
+  console.log('  3. Or start manually:');
   console.log('');
 
   // Detect systemd
@@ -84,7 +88,7 @@ export async function runSetup(): Promise<void> {
   }
   console.log('     cd ~/hearth && npm run start');
   console.log('');
-  console.log('  3. Open in your browser:');
+  console.log('  4. Open in your browser:');
   console.log('');
   console.log(`     ${network.publicUrl}`);
   console.log('');

@@ -6,6 +6,7 @@ const setup_1 = require("./steps/setup");
 const start_1 = require("./steps/start");
 const personalize_1 = require("./steps/personalize");
 const update_1 = require("./steps/update");
+const service_1 = require("./steps/service");
 const program = new commander_1.Command();
 program
     .name('hearth')
@@ -36,5 +37,11 @@ program
     .description('Update Hearth to the latest version')
     .action(async () => {
     await (0, update_1.runUpdate)();
+});
+program
+    .command('install-service')
+    .description('Install Hearth as a background service (systemd/launchd)')
+    .action(async () => {
+    await (0, service_1.runInstallService)();
 });
 program.parse();
