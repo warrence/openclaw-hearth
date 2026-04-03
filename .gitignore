@@ -14,7 +14,7 @@ node_modules/
 apps/api-nest/dist/
 apps/web/dist/
 packages/openclaw-plugin-hearth-app/dist/
-packages/hearth-cli/dist/
+# hearth-cli dist IS committed — needed for npx hearth commands to work
 
 # Agent workspace (private)
 AGENTS.md
