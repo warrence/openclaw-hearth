@@ -520,7 +520,7 @@ import {
   listUsers,
   login,
   createUserEventStream,
-  getAgentSettings,
+  getAgentDisplayInfo,
   getHealthStatus,
   updateAgentDisplayName,
   logout,
@@ -978,17 +978,13 @@ async function bootApp() {
       openclawStatus.value = 'unknown'
     }
 
-    // Fetch agent display name from OpenClaw config
+    // Fetch agent display name (public endpoint — no auth needed)
     try {
-      const agentConfig = await getAgentSettings()
-      if (agentConfig?.agentDisplayName) {
-        agentDisplayName.value = agentConfig.agentDisplayName
-        agentNameInput.value = agentConfig.agentDisplayName
-        // Store the OpenClaw default for placeholder
-        const openClawDefault = agentConfig.availableAgents?.find?.(
-          (a) => a.id === agentConfig.hearthAgentId
-        )?.name || agentConfig.agentDisplayName
-        agentDefaultName.value = openClawDefault
+      const displayInfo = await getAgentDisplayInfo()
+      if (displayInfo?.agentDisplayName) {
+        agentDisplayName.value = displayInfo.agentDisplayName
+        agentNameInput.value = displayInfo.agentDisplayName
+        agentDefaultName.value = displayInfo.agentDisplayName
       }
     } catch { /* fallback to default */ }
 

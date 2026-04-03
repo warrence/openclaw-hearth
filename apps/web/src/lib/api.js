@@ -440,6 +440,11 @@ export function getAgentSettings() {
   return requestWithBaseUrl(NEST_API_BASE, '/agent-settings')
 }
 
+/** Public endpoint — returns just the display name, no auth required */
+export function getAgentDisplayInfo() {
+  return requestWithBaseUrl(NEST_API_BASE, '/agent-display-info')
+}
+
 export function updateAgentSettings(hearthAgentId) {
   return requestWithBaseUrl(NEST_API_BASE, '/agent-settings', {
     method: 'PUT',

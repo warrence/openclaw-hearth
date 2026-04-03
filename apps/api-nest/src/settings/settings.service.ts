@@ -86,6 +86,11 @@ export class SettingsService {
     return this.modelCatalog.settingsPayload(updated);
   }
 
+  /** Returns just the display name — safe for public/unauthenticated access */
+  getAgentDisplayName(): string {
+    return this.openClawConfigWriter.get<string>('agentDisplayName') || 'Assistant';
+  }
+
   async getAgentSettings(): Promise<Record<string, unknown>> {
     const config = this.getOpenClawConfig();
 

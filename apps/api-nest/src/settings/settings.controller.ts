@@ -64,6 +64,13 @@ export class SettingsController {
     return this.settingsService.updateGatewayConfig(body);
   }
 
+  /** Public — just the display name, no sensitive agent config */
+  @Get('agent-display-info')
+  getAgentDisplayInfo(): { agentDisplayName: string } {
+    const name = this.settingsService.getAgentDisplayName();
+    return { agentDisplayName: name };
+  }
+
   @Get('agent-settings')
   @UseGuards(SessionAuthGuard, OwnerAuthGuard)
   getAgentSettings(): Promise<Record<string, unknown>> {
