@@ -798,9 +798,11 @@ onMounted(async () => {
   document.addEventListener('visibilitychange', handleVisibilityChange)
   navigator.serviceWorker?.addEventListener?.('controllerchange', handleServiceWorkerControllerChange)
   syncServiceWorkerClientState()
-  await checkForAppUpdates()
-  startUpdateCheckTimer()
+  // Boot app first — don't wait for service worker update check
   await bootApp()
+  // Update check runs after app is visible
+  checkForAppUpdates()
+  startUpdateCheckTimer()
 })
 
 onBeforeUnmount(() => {
