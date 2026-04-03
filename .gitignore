@@ -10,9 +10,7 @@ node_modules/
 *.crt
 *.key
 
-# Build outputs — API, web, and plugin dist are committed (pre-built for users)
-# Only hearth-cli dist is ignored (dev tool, rebuilt locally)
-packages/hearth-cli/dist/
+# Build outputs — all dist folders are committed (pre-built for users)
 
 # Agent workspace (private)
 AGENTS.md
