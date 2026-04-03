@@ -254,7 +254,7 @@ async function setupNetwork() {
             (0, child_process_1.execSync)('sudo systemctl stop caddy 2>/dev/null', { stdio: 'pipe', timeout: 5000 });
         }
         catch { /* ignore */ }
-        (0, child_process_1.execSync)(`sudo caddy start --config ${caddyfilePath}`, { stdio: 'pipe', timeout: 10000 });
+        (0, child_process_1.execSync)(`sudo caddy start --config ${caddyfilePath}`, { stdio: 'inherit', timeout: 60000 });
         console.log('  ✓ Caddy started');
     }
     catch (err) {

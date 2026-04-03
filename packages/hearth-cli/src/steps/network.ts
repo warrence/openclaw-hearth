@@ -225,7 +225,7 @@ export async function setupNetwork(): Promise<NetworkConfig> {
     // Stop existing Caddy if running
     try { execSync('sudo caddy stop 2>/dev/null', { stdio: 'pipe', timeout: 5000 }); } catch { /* ignore */ }
     try { execSync('sudo systemctl stop caddy 2>/dev/null', { stdio: 'pipe', timeout: 5000 }); } catch { /* ignore */ }
-    execSync(`sudo caddy start --config ${caddyfilePath}`, { stdio: 'pipe', timeout: 10000 });
+    execSync(`sudo caddy start --config ${caddyfilePath}`, { stdio: 'inherit', timeout: 60000 });
     console.log('  ✓ Caddy started');
   } catch (err: any) {
     console.warn(`  ⚠ Could not start Caddy: ${err.message?.split('\n')[0]}`);
