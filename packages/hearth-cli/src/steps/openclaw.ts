@@ -33,6 +33,7 @@ export async function setupOpenClaw(): Promise<OpenClawConfig> {
     ]);
 
     if (useDetected) {
+      ensureResponsesEndpoint();
       const agents = await fetchAgents(detected.baseUrl, detected.token);
       console.log('  ✓ OpenClaw configured');
       console.log('');
@@ -159,6 +160,22 @@ export async function setupOpenClaw(): Promise<OpenClawConfig> {
   };
 }
 
+function ensureResponsesEndpoint(): void {
+  const configPath = path.join(os.homedir(), '.openclaw', 'openclaw.json');
+  try {
+    if (!fs.existsSync(configPath)) return;
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    if (!config.gateway) config.gateway = {};
+    if (!config.gateway.http) config.gateway.http = {};
+    if (!config.gateway.http.endpoints) config.gateway.http.endpoints = {};
+    if (!config.gateway.http.endpoints.responses) {
+      config.gateway.http.endpoints.responses = { enabled: true };
+      fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+      console.log('  ✓ Responses HTTP endpoint enabled');
+    }
+  } catch { /* ignore */ }
+}
+
 function ensureGatewayToken(): string {
   const configPath = path.join(os.homedir(), '.openclaw', 'openclaw.json');
   try {
@@ -168,21 +185,31 @@ function ensureGatewayToken(): string {
 
     // Check if token already exists
     const existing = config.gateway?.auth?.token;
-    if (existing) return existing;
+    if (!existing) {
+      // Generate a new token
+      const crypto = require('crypto');
+      const token = crypto.randomBytes(24).toString('hex');
 
-    // Generate a new token
-    const crypto = require('crypto');
-    const token = crypto.randomBytes(24).toString('hex');
+      if (!config.gateway) config.gateway = {};
+      if (!config.gateway.auth) config.gateway.auth = {};
+      config.gateway.auth.mode = 'token';
+      config.gateway.auth.token = token;
 
+      console.log('  ✓ Gateway token generated and saved');
+    }
+
+    // Ensure Responses HTTP endpoint is enabled (required for title generation)
     if (!config.gateway) config.gateway = {};
-    if (!config.gateway.auth) config.gateway.auth = {};
-    config.gateway.auth.mode = 'token';
-    config.gateway.auth.token = token;
+    if (!config.gateway.http) config.gateway.http = {};
+    if (!config.gateway.http.endpoints) config.gateway.http.endpoints = {};
+    if (!config.gateway.http.endpoints.responses) {
+      config.gateway.http.endpoints.responses = { enabled: true };
+      console.log('  ✓ Responses HTTP endpoint enabled');
+    }
 
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-    console.log('  ✓ Gateway token generated and saved');
 
-    return token;
+    return config.gateway.auth.token;
   } catch {
     console.log('  ⚠ Could not generate gateway token — set it manually in ~/.openclaw/openclaw.json');
     return '';

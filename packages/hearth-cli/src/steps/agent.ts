@@ -76,14 +76,14 @@ export async function setupAgent(openclaw: OpenClawConfig): Promise<AgentConfig>
     },
   ]);
 
-  // Default display name: capitalize the agent ID (e.g. "main" → "Main", "aeris" → "Aeris")
+  // Default display name: capitalize the agent ID (e.g. "main" → "Main")
   const defaultDisplayName = agentId.charAt(0).toUpperCase() + agentId.slice(1);
 
   const { displayName } = await inquirer.prompt([
     {
       type: 'input',
       name: 'displayName',
-      message: 'Display name for the agent in the app (e.g. Aeris, Jarvis, Nova):',
+      message: 'Display name for the agent in the app (e.g. Jarvis, Nova, Sage):',
       default: defaultDisplayName,
     },
   ]);
