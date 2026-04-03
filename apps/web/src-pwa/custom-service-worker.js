@@ -1,4 +1,4 @@
-/* eslint-env serviceworker */
+/* eslint-disable no-undef */
 
 // Force-clear any broken cached assets from previous bad builds
 self.addEventListener('activate', (event) => {
