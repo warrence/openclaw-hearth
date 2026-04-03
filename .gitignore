@@ -10,7 +10,11 @@ node_modules/
 *.crt
 *.key
 
-# Build outputs — all dist folders are committed (pre-built for users)
+# Build outputs (users build locally)
+apps/api-nest/dist/
+apps/web/dist/
+packages/openclaw-plugin-hearth-app/dist/
+packages/hearth-cli/dist/
 
 # Agent workspace (private)
 AGENTS.md
