@@ -32,9 +32,9 @@ export const openClawConfig = registerAs(
     token: process.env.OPENCLAW_GATEWAY_TOKEN || undefined,
     // Agent and model defaults — overridden by hearth.json (dashboard settings)
     defaultAgentId: 'main',
-    defaultModel: 'openai-codex/gpt-5.4',
-    fastModel: 'openai-codex/gpt-5.4',   // fallback only; hearth.json takes priority
-    deepModel: 'anthropic/claude-sonnet-4-5', // fallback only; hearth.json takes priority
+    defaultModel: process.env.OPENCLAW_DEFAULT_MODEL || 'default',
+    fastModel: process.env.OPENCLAW_FAST_MODEL || process.env.OPENCLAW_DEFAULT_MODEL || 'default',   // fallback only; hearth.json takes priority
+    deepModel: process.env.OPENCLAW_DEEP_MODEL || process.env.OPENCLAW_DEFAULT_MODEL || 'default', // fallback only; hearth.json takes priority
     agentTimeoutMs: Number(process.env.OPENCLAW_AGENT_TIMEOUT_MS ?? 900000),
     responsesHttpEnabled: process.env.OPENCLAW_RESPONSES_HTTP_ENABLED !== 'false',
     responsesPath: process.env.OPENCLAW_RESPONSES_HTTP_PATH ?? '/v1/responses',

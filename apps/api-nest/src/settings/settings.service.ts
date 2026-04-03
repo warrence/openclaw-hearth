@@ -110,9 +110,15 @@ export class SettingsService {
       }
     } catch { /* ignore */ }
 
-    // Custom display name from hearth.json takes priority
-    const customDisplayName = this.openClawConfigWriter.get<string>('agentDisplayName');
+    // Custom display name from hearth.json takes priority, but treat the installer default
+    // "Assistant" as unset when OpenClaw already knows a more specific agent name.
+    const customDisplayNameRaw = this.openClawConfigWriter.get<string>('agentDisplayName');
     const currentAgent = availableAgents.find((a) => a.id === currentAgentId);
+    const customDisplayName =
+      customDisplayNameRaw &&
+      !(customDisplayNameRaw.trim().toLowerCase() === 'assistant' && currentAgent?.name && currentAgent.name.trim().toLowerCase() !== 'assistant')
+        ? customDisplayNameRaw
+        : null;
     const agentDisplayName = customDisplayName || currentAgent?.name || 'Assistant';
 
     return {
