@@ -1512,7 +1512,7 @@ export class ConversationAssistantExecutionService {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: config?.fastModel ?? 'openai-codex/gpt-5.4',
+          model: config?.fastModel || 'default',
           input: `Generate a short conversation title (3-6 words max) from this message. No quotes, no punctuation at the end. Just the title.\n\nMessage: ${prompt}`,
           stream: false,
           max_output_tokens: 20,
@@ -1520,7 +1520,10 @@ export class ConversationAssistantExecutionService {
         signal: AbortSignal.timeout(15000),
       });
 
-      if (!response.ok) return;
+      if (!response.ok) {
+        console.warn(`[Hearth] Title generation failed: ${response.status} ${response.statusText}`);
+        return;
+      }
 
       const data = await response.json() as { output?: Array<{ content?: Array<{ text?: string }> }> };
       const title = data.output?.[0]?.content?.[0]?.text?.trim();
@@ -1535,8 +1538,8 @@ export class ConversationAssistantExecutionService {
           data: { id: conversation.id, title },
         });
       }
-    } catch {
-      // best-effort
+    } catch (err) {
+      console.warn('[Hearth] Title generation error:', err);
     }
   }
 
