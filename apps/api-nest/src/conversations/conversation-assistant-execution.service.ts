@@ -1500,7 +1500,10 @@ export class ConversationAssistantExecutionService {
       const config = this.configService.get<OpenClawConfig>('openclaw', { infer: true });
       const baseUrl = config?.baseUrl ?? 'http://127.0.0.1:18789';
       const token = config?.token ?? '';
-      if (!token) return;
+      if (!token) {
+        console.warn('[Hearth] Title generation skipped: no gateway token');
+        return;
+      }
 
       const prompt = text.length > 300 ? text.slice(0, 300) : text;
 
