@@ -62,8 +62,21 @@ export async function installDependencies(): Promise<void> {
       execSync('npm install', { cwd: pkg.dir, stdio: 'pipe', timeout: 120000 });
       console.log(`  ✓ ${pkg.name}: done`);
     } catch (err: any) {
+      const msg = err.message?.split('\n')[0] ?? 'Unknown error';
       console.error(`  ✗ ${pkg.name}: npm install failed`);
-      console.error(`    ${err.message?.split('\n')[0] ?? 'Unknown error'}`);
+      console.error(`    ${msg}`);
+      if (msg.includes('ETIMEDOUT') || msg.includes('ENOMEM') || msg.includes('killed')) {
+        console.error('');
+        console.error('  💡 This might be a memory issue. If you\'re on a small server (< 2GB RAM),');
+        console.error('     try adding swap space:');
+        console.error('');
+        console.error('     sudo fallocate -l 1G /swapfile');
+        console.error('     sudo chmod 600 /swapfile');
+        console.error('     sudo mkswap /swapfile');
+        console.error('     sudo swapon /swapfile');
+        console.error('');
+        console.error('     Then re-run: npx hearth setup');
+      }
       process.exit(1);
     }
   }

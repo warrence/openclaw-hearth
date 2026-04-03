@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import { runSetup } from './steps/setup';
 import { runStart } from './steps/start';
 import { runPersonalize } from './steps/personalize';
+import { runUpdate } from './steps/update';
 
 const program = new Command();
 
@@ -32,6 +33,13 @@ program
   .description('Create a personality profile for your assistant')
   .action(async () => {
     await runPersonalize();
+  });
+
+program
+  .command('update')
+  .description('Update Hearth to the latest version')
+  .action(async () => {
+    await runUpdate();
   });
 
 program.parse();
