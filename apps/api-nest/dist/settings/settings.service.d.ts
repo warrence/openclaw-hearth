@@ -1,0 +1,40 @@
+import { ConfigService } from '@nestjs/config';
+import { TestGatewayConnectionDto } from './dto/test-gateway-connection.dto';
+import { UpdateGatewayConfigDto } from './dto/update-gateway-config.dto';
+import { UpdateModelPresetSettingsDto } from './dto/update-model-preset-settings.dto';
+import { LaravelCryptoService } from './laravel-crypto.service';
+import { OpenClawConfigWriterService } from './openclaw-config-writer.service';
+import { OpenClawGatewayHealthService } from './openclaw-gateway-health.service';
+import { OpenClawModelCatalogService } from './openclaw-model-catalog.service';
+import { SettingsRepository } from './settings.repository';
+export declare class SettingsService {
+    private readonly repository;
+    private readonly cryptoService;
+    private readonly modelCatalog;
+    private readonly gatewayHealthService;
+    private readonly configService;
+    private readonly openClawConfigWriter;
+    constructor(repository: SettingsRepository, cryptoService: LaravelCryptoService, modelCatalog: OpenClawModelCatalogService, gatewayHealthService: OpenClawGatewayHealthService, configService: ConfigService, openClawConfigWriter: OpenClawConfigWriterService);
+    getOpenClawModelOptions(): Promise<Record<string, unknown>>;
+    getModelPresetSettings(): Promise<Record<string, unknown>>;
+    updateModelPresetSettings(payload: UpdateModelPresetSettingsDto): Promise<Record<string, unknown>>;
+    getAgentDisplayName(): string;
+    getAgentSettings(): Promise<Record<string, unknown>>;
+    updateAgentDisplayName(name: string): Promise<Record<string, unknown>>;
+    getReminderSettings(): Record<string, unknown>;
+    updateReminderSettings(critical: {
+        enabled: boolean;
+        intervalMinutes: number;
+        maxRepeats: number;
+    }): Record<string, unknown>;
+    updateAgentSettings(hearthAgentId: string): Promise<Record<string, unknown>>;
+    getGatewayStatus(): Promise<Record<string, unknown>>;
+    testGatewayConnection(payload: TestGatewayConnectionDto): Promise<Record<string, unknown>>;
+    updateGatewayConfig(payload: UpdateGatewayConfigDto): Promise<Record<string, unknown>>;
+    private getModelPresetSettingsRecord;
+    private normalizePresetPayload;
+    private normalizeNullableString;
+    private extractGatewayDefaultModel;
+    private getModelDefaults;
+    private getOpenClawConfig;
+}

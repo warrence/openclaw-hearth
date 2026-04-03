@@ -10,10 +10,8 @@ node_modules/
 *.crt
 *.key
 
-# Build outputs (rebuild locally)
-apps/api-nest/dist/
-apps/web/dist/
-packages/openclaw-plugin-hearth-app/dist/
+# Build outputs — API, web, and plugin dist are committed (pre-built for users)
+# Only hearth-cli dist is ignored (dev tool, rebuilt locally)
 packages/hearth-cli/dist/
 
 # Agent workspace (private)
@@ -63,11 +61,9 @@ designs/
 # Root lock file
 /package-lock.json
 
-# Apps build/env
-apps/api-nest/dist/
+# Apps env (dist is committed)
 apps/api-nest/.env
 apps/api-nest/storage/
-apps/web/dist/
 apps/web/.env
 apps/web/.quasar/
 apps/api/.env

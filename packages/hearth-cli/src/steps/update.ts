@@ -142,48 +142,53 @@ export async function runUpdate(): Promise<void> {
   }
   console.log('  ✓ Dependencies installed');
 
-  // 6. Build
-  console.log('  → Building...');
-  const buildTargets = [
-    { name: 'API', dir: path.join(root, 'apps', 'api-nest'), cmd: 'npm run build' },
-    { name: 'Plugin', dir: path.join(root, 'packages', 'openclaw-plugin-hearth-app'), cmd: 'npm run build' },
-    { name: 'Web', dir: path.join(root, 'apps', 'web'), cmd: 'npm run build:pwa' },
+  // 6. Verify pre-built dist (builds are shipped in git — no build step needed)
+  const distChecks = [
+    { name: 'API', file: path.join(root, 'apps', 'api-nest', 'dist', 'main.js') },
+    { name: 'Web', file: path.join(root, 'apps', 'web', 'dist', 'pwa', 'index.html') },
+    { name: 'Plugin', file: path.join(root, 'packages', 'openclaw-plugin-hearth-app', 'dist', 'index.js') },
   ];
 
-  for (const target of buildTargets) {
-    if (!fs.existsSync(path.join(target.dir, 'package.json'))) continue;
-    try {
-      console.log(`    → ${target.name}...`);
-      // Remove old dist so we can detect if build actually succeeds
-      const distDir = path.join(target.dir, 'dist');
-      if (target.name === 'Web') {
-        const marker = path.join(distDir, 'pwa', 'index.html');
-        if (fs.existsSync(marker)) fs.unlinkSync(marker);
-      }
-      execSync(target.cmd, {
-        cwd: target.dir,
-        stdio: 'inherit',
-        timeout: 600000,
-        env: { ...process.env, NODE_OPTIONS: '--max-old-space-size=1024' },
-      }); // 10 min
-      console.log(`    ✓ ${target.name}`);
-    } catch (err: any) {
-      if (err.killed || err.signal === 'SIGTERM') {
-        console.error(`  ✗ ${target.name} build timed out.`);
-        console.error('  💡 Try adding swap: sudo fallocate -l 1G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile');
-        process.exit(1);
-      }
-      // Check if output files exist despite the "error" (warnings treated as errors)
-      const distDir = path.join(target.dir, 'dist');
-      if (target.name === 'Web' && fs.existsSync(path.join(distDir, 'pwa', 'index.html'))) {
-        console.log(`    ✓ ${target.name} (completed with warnings)`);
-      } else {
+  let allDistPresent = true;
+  for (const check of distChecks) {
+    if (!fs.existsSync(check.file)) {
+      console.warn(`  ⚠ ${check.name} dist missing — rebuilding...`);
+      allDistPresent = false;
+    }
+  }
+
+  if (allDistPresent) {
+    console.log('  ✓ Pre-built assets verified');
+  } else {
+    // Fallback: build locally if dist files are missing
+    console.log('  → Building missing assets...');
+    const buildTargets = [
+      { name: 'API', dir: path.join(root, 'apps', 'api-nest'), cmd: 'npm run build', check: distChecks[0].file },
+      { name: 'Plugin', dir: path.join(root, 'packages', 'openclaw-plugin-hearth-app'), cmd: 'npm run build', check: distChecks[2].file },
+      { name: 'Web', dir: path.join(root, 'apps', 'web'), cmd: 'npm run build:pwa', check: distChecks[1].file },
+    ];
+
+    for (const target of buildTargets) {
+      if (fs.existsSync(target.check)) continue; // already built
+      try {
+        console.log(`    → ${target.name}...`);
+        execSync(target.cmd, {
+          cwd: target.dir,
+          stdio: 'inherit',
+          timeout: 600000,
+          env: { ...process.env, NODE_OPTIONS: '--max-old-space-size=1024' },
+        });
+        console.log(`    ✓ ${target.name}`);
+      } catch (err: any) {
         console.error(`  ✗ ${target.name} build failed`);
+        if (err.killed) {
+          console.error('  💡 Try adding swap: sudo fallocate -l 1G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile');
+        }
         process.exit(1);
       }
     }
+    console.log('  ✓ Build complete');
   }
-  console.log('  ✓ Build complete');
 
   // 7. Run migrations if available
   try {
