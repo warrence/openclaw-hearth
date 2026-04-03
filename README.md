@@ -144,6 +144,64 @@ npx hearth start
 
 Open `http://localhost:9100` in your browser.
 
+### HTTPS with Caddy (Recommended)
+
+The setup wizard can automatically configure [Caddy](https://caddyserver.com) as an HTTPS reverse proxy with **free automatic certificates** from Let's Encrypt.
+
+During setup, Hearth will:
+- Detect your public IP and hostname
+- Offer to install Caddy if not present
+- Generate a Caddyfile
+- Start Caddy with auto-HTTPS
+
+```
+🌐  Network & HTTPS
+
+  → Public IP detected: 54.123.45.67
+  ? Set up HTTPS with Caddy? Yes
+  ? Which address should Hearth use? yourdomain.com
+  ? HTTPS port: 443
+
+  ✓ Hearth will be available at: https://yourdomain.com
+```
+
+If you already have Hearth installed, you can set up Caddy manually:
+
+```bash
+# Install Caddy
+sudo apt install -y caddy   # Debian/Ubuntu
+brew install caddy           # macOS
+
+# Create a Caddyfile
+cat > ~/hearth/Caddyfile << 'EOF'
+yourdomain.com {
+  handle /api/* {
+    reverse_proxy localhost:3001
+  }
+  handle /storage/* {
+    reverse_proxy localhost:3001
+  }
+  handle {
+    reverse_proxy localhost:9100
+  }
+}
+EOF
+
+# Start Caddy
+caddy start --config ~/hearth/Caddyfile
+```
+
+> **Note:** For Let's Encrypt to work, your domain must point to your server's public IP and port 443 must be open. For IP-only setups, Caddy uses self-signed certificates.
+
+### Updating
+
+```bash
+cd ~/hearth
+npx hearth update
+```
+
+This pulls the latest code, checks OpenClaw compatibility, rebuilds everything, and updates the plugin.
+
 ### Manual Setup
 
 If you prefer to install prerequisites yourself:
