@@ -1524,7 +1524,8 @@ export class ConversationAssistantExecutionService {
       });
 
       if (!response.ok) {
-        console.warn(`[Hearth] Title generation failed: ${response.status} ${response.statusText}`);
+        const errBody = await response.text().catch(() => '');
+        console.warn(`[Hearth] Title generation failed: ${response.status} ${response.statusText} — ${errBody}`);
         return;
       }
 
