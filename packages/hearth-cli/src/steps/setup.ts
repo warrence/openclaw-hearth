@@ -60,7 +60,7 @@ export async function runSetup(): Promise<void> {
   console.log('');
   console.log('  1. Set up your AI provider:');
   console.log('');
-  console.log('     openclaw configure');
+  console.log('     openclaw config');
   console.log('');
   console.log('     This will ask you to choose a model (e.g. OpenAI,');
   console.log('     Anthropic, Google) and sign in with OAuth.');

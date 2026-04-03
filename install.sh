@@ -422,7 +422,7 @@ main() {
   echo ""
   echo -e "  1. Set up your AI provider:"
   echo ""
-  echo -e "     ${CYAN}openclaw configure${NC}"
+  echo -e "     ${CYAN}openclaw config${NC}"
   echo ""
   echo -e "     Choose a model (OpenAI, Anthropic, Google) and sign in."
   echo -e "     Without this, your assistant can't respond."
