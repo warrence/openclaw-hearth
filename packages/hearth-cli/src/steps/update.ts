@@ -147,14 +147,25 @@ export async function runUpdate(): Promise<void> {
   const buildTargets = [
     { name: 'API', dir: path.join(root, 'apps', 'api-nest'), cmd: 'npm run build' },
     { name: 'Plugin', dir: path.join(root, 'packages', 'openclaw-plugin-hearth-app'), cmd: 'npm run build' },
-    { name: 'Web', dir: path.join(root, 'apps', 'web'), cmd: 'NODE_OPTIONS="--max-old-space-size=1024" npm run build:pwa' },
+    { name: 'Web', dir: path.join(root, 'apps', 'web'), cmd: 'npm run build:pwa' },
   ];
 
   for (const target of buildTargets) {
     if (!fs.existsSync(path.join(target.dir, 'package.json'))) continue;
     try {
       console.log(`    → ${target.name}...`);
-      execSync(target.cmd, { cwd: target.dir, stdio: 'inherit', timeout: 600000, env: { ...process.env } }); // 10 min
+      // Remove old dist so we can detect if build actually succeeds
+      const distDir = path.join(target.dir, 'dist');
+      if (target.name === 'Web') {
+        const marker = path.join(distDir, 'pwa', 'index.html');
+        if (fs.existsSync(marker)) fs.unlinkSync(marker);
+      }
+      execSync(target.cmd, {
+        cwd: target.dir,
+        stdio: 'inherit',
+        timeout: 600000,
+        env: { ...process.env, NODE_OPTIONS: '--max-old-space-size=1024' },
+      }); // 10 min
       console.log(`    ✓ ${target.name}`);
     } catch (err: any) {
       if (err.killed || err.signal === 'SIGTERM') {
