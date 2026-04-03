@@ -87,11 +87,11 @@ WantedBy=multi-user.target
 
   console.log('');
   console.log('  Commands:');
-  console.log('    sudo systemctl start hearth     # Start');
-  console.log('    sudo systemctl stop hearth      # Stop');
-  console.log('    sudo systemctl restart hearth   # Restart');
-  console.log('    sudo systemctl status hearth    # Status');
-  console.log('    journalctl -u hearth -f         # View logs');
+  console.log('    npx hearth service start     # Start');
+  console.log('    npx hearth service stop      # Stop');
+  console.log('    npx hearth service restart   # Restart');
+  console.log('    npx hearth service status    # Status');
+  console.log('    npx hearth service logs      # View logs');
 }
 
 // ─── launchd (macOS) ───
@@ -158,9 +158,11 @@ function createLaunchdService(root: string): void {
 
   console.log('');
   console.log('  Commands:');
-  console.log(`    launchctl kickstart -k gui/$(id -u)/${label}   # Restart`);
-  console.log(`    launchctl kill SIGTERM gui/$(id -u)/${label}    # Stop`);
-  console.log(`    tail -f ${logPath}                              # View logs`);
+  console.log('    npx hearth service start     # Start');
+  console.log('    npx hearth service stop      # Stop');
+  console.log('    npx hearth service restart   # Restart');
+  console.log('    npx hearth service status    # Status');
+  console.log('    npx hearth service logs      # View logs');
 }
 
 // ─── Manage ───
