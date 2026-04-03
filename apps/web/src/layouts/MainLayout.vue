@@ -798,6 +798,7 @@ onMounted(async () => {
   document.addEventListener('visibilitychange', handleVisibilityChange)
   navigator.serviceWorker?.addEventListener?.('controllerchange', handleServiceWorkerControllerChange)
   syncServiceWorkerClientState()
+  document.addEventListener('keydown', handleGlobalKeyboard)
   // Boot app first — don't wait for service worker update check
   await bootApp()
   // Update check runs after app is visible
@@ -814,6 +815,7 @@ onBeforeUnmount(() => {
     window.clearTimeout(presenceSyncTimer)
     presenceSyncTimer = null
   }
+  document.removeEventListener('keydown', handleGlobalKeyboard)
   window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
   window.removeEventListener('appinstalled', handleAppInstalled)
   window.removeEventListener('pwa-update-ready', handlePwaUpdateReady)
@@ -1929,6 +1931,14 @@ async function handleRestoreConversation(conversation) {
     $q.notify({ type: 'negative', message: error.message })
   } finally {
     restoreLoading.value = false
+  }
+}
+
+function handleGlobalKeyboard(e) {
+  // Cmd+N (Mac) or Ctrl+N (Windows/Linux) — new chat
+  if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
+    e.preventDefault()
+    handleCreateConversation()
   }
 }
 
