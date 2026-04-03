@@ -20,11 +20,13 @@ https://github.com/warrence/openclaw-hearth/raw/main/apps/web/public/brand/heart
 
 ## Why Hearth?
 
-Every time you switch AI platforms, you start over. Every conversation, every preference, every little thing it learned about your family — gone.
+An AI assistant that truly knows your family isn't built in a day. It's built over **years** — thousands of conversations, preferences learned, routines understood, inside jokes remembered. That kind of relationship can't be replaced by signing up for the next platform.
 
-We built Hearth because your family's memories should be **yours forever**. Stored on your own hardware. Under your own control. No matter how many times the AI industry reinvents itself.
+Think of it like a friend you've known for ten years. You can't just swap them out for someone new and expect the same understanding. **Your AI's memory and personality are earned over time — and they should belong to you.**
 
-**AI keeps getting better every year.** The model you use today will be replaced by something smarter tomorrow. Hearth separates your family's knowledge from the AI that processes it — swap models, switch providers, upgrade whenever. Your memory stays intact.
+But every time you switch AI platforms, you start over. Every conversation, every preference, every little thing it learned — gone. Your memories don't belong to you. They belong to whichever company you're renting this month.
+
+We built Hearth to fix that. Your family's memories stored on **your hardware**, under **your control**, surviving every model upgrade and platform shift. The AI gets smarter every year — your accumulated knowledge grows with it, never resets.
 
 ## Features
 
