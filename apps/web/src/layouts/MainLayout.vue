@@ -952,51 +952,64 @@ async function bootApp() {
   authChecked.value = false
   recordLastActiveAt()
 
-  // Check OpenClaw health
-  try {
-    const health = await getHealthStatus()
-    if (health?.openclaw?.status === 'not_configured') {
-      openclawStatus.value = 'not_configured'
-    } else if (health?.openclaw?.status === 'disconnected') {
-      openclawStatus.value = 'disconnected'
-    } else if (health?.openclaw?.status === 'no_model') {
-      openclawStatus.value = 'no_model'
-    } else {
-      openclawStatus.value = 'connected'
+  // Safety timeout: if boot takes too long, show the login screen anyway
+  const bootTimeout = setTimeout(() => {
+    if (!authChecked.value) {
+      console.warn('[Hearth] Boot timed out — showing login screen')
+      authChecked.value = true
+      enterLoginState()
     }
-  } catch {
-    openclawStatus.value = 'unknown'
-  }
+  }, 10000)
 
-  // Fetch agent display name from OpenClaw config
   try {
-    const agentConfig = await getAgentSettings()
-    if (agentConfig?.agentDisplayName) {
-      agentDisplayName.value = agentConfig.agentDisplayName
-      agentNameInput.value = agentConfig.agentDisplayName
-      // Store the OpenClaw default for placeholder
-      const openClawDefault = agentConfig.availableAgents?.find?.(
-        (a) => a.id === agentConfig.hearthAgentId
-      )?.name || agentConfig.agentDisplayName
-      agentDefaultName.value = openClawDefault
+    // Check OpenClaw health
+    try {
+      const health = await getHealthStatus()
+      if (health?.openclaw?.status === 'not_configured') {
+        openclawStatus.value = 'not_configured'
+      } else if (health?.openclaw?.status === 'disconnected') {
+        openclawStatus.value = 'disconnected'
+      } else if (health?.openclaw?.status === 'no_model') {
+        openclawStatus.value = 'no_model'
+      } else {
+        openclawStatus.value = 'connected'
+      }
+    } catch {
+      openclawStatus.value = 'unknown'
     }
-  } catch { /* fallback to default */ }
 
-  // Always load profiles (public endpoint — needed for login chooser + switch menu)
-  await loadProfiles()
+    // Fetch agent display name from OpenClaw config
+    try {
+      const agentConfig = await getAgentSettings()
+      if (agentConfig?.agentDisplayName) {
+        agentDisplayName.value = agentConfig.agentDisplayName
+        agentNameInput.value = agentConfig.agentDisplayName
+        // Store the OpenClaw default for placeholder
+        const openClawDefault = agentConfig.availableAgents?.find?.(
+          (a) => a.id === agentConfig.hearthAgentId
+        )?.name || agentConfig.agentDisplayName
+        agentDefaultName.value = openClawDefault
+      }
+    } catch { /* fallback to default */ }
 
-  try {
-    const user = await getMe()
-    currentUser.value = user
-    selectedProfileId.value = user.id
-    // watch(selectedProfileId) triggers loadConversations automatically
-    await syncPushSubscription(user.id)
-    connectEventStream(user.id)
-  } catch {
-    // Not authenticated — show login dialog
-    enterLoginState()
+    // Always load profiles (public endpoint — needed for login chooser + switch menu)
+    await loadProfiles()
+
+    try {
+      const user = await getMe()
+      currentUser.value = user
+      selectedProfileId.value = user.id
+      // watch(selectedProfileId) triggers loadConversations automatically
+      await syncPushSubscription(user.id)
+      connectEventStream(user.id)
+    } catch {
+      // Not authenticated — show login dialog
+      enterLoginState()
+    } finally {
+      authChecked.value = true
+    }
   } finally {
-    authChecked.value = true
+    clearTimeout(bootTimeout)
   }
 }
 
