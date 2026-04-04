@@ -5,11 +5,11 @@
 <h1 align="center">Hearth</h1>
 
 <p align="center">
-  <strong>A self-hosted, multi-user household assistant built on <a href="https://github.com/openclaw/openclaw">OpenClaw</a></strong>
+  <strong>A self-hosted household AI chat app built on <a href="https://github.com/openclaw/openclaw">OpenClaw</a></strong>
 </p>
 
 <p align="center">
-  Multi-conversation chat · Owner/member permissions · Reminders · HTTPS · Dark theme PWA
+  Designed for multiple conversations, multi-user family life, private chats, and long-term memory that can stay with your household over time.
 </p>
 
 <p align="center">
@@ -20,34 +20,64 @@
 
 ---
 
+## Why Hearth?
+
+Most AI products are built for a single user.
+
+But real life at home is not single-user. Families have separate conversations, shared context, different privacy needs, and long-term history that may become increasingly valuable as AI becomes more integrated into daily life.
+
+Hearth is an attempt to build that household layer.
+
+Built on top of OpenClaw, Hearth turns self-hosted AI into a family-ready chat system with multiple conversations, multi-user access, private chats, reminders, and long-term memory designed to stay on hardware you control.
+
+The long-term idea is simple:
+
+**if AI becomes part of everyday family life, the memory and context a household builds with it should belong to that household.**
+
+## What Hearth is today
+
+Today, Hearth is focused on becoming a dependable household AI chat experience with:
+
+- **multiple chat conversations** for separate topics and ongoing threads
+- **multi-user household support** so each family member has their own account
+- **private chats and role-aware access**
+- **self-hosted deployment** with your data on your own hardware
+- **OpenClaw-powered intelligence** as the underlying AI layer
+- **reminders and assistant workflows**
+- **mobile-first PWA design** for daily use
+
 ## Demo
 
 <p align="center">
   <img src="apps/web/public/brand/hearth-demo.gif" alt="Hearth Demo" width="300" />
 </p>
 
-## Why Hearth?
-
-An AI assistant that truly knows your family isn't built in a day. It's built over **years** — thousands of conversations, preferences learned, routines understood, inside jokes remembered. That kind of relationship can't be replaced by signing up for the next platform.
-
-Think of it like a friend you've known for ten years. You can't just swap them out for someone new and expect the same understanding. **Your AI's memory and personality are earned over time — and they should belong to you.**
-
-But every time you switch AI platforms, you start over. Every conversation, every preference, every little thing it learned — gone. Your memories don't belong to you. They belong to whichever company you're renting this month.
-
-We built Hearth to fix that. Your family's memories stored on **your hardware**, under **your control**, surviving every model upgrade and platform shift. The AI gets smarter every year — your accumulated knowledge grows with it, never resets.
-
 ## Features
 
-- 💬 **Multi-conversation chat** — separate threads by topic, each with independent context
-- 👥 **Multi-user household** — each family member gets their own account with private chats
-- 🔐 **Owner/member permissions** — owners manage settings, members just chat
-- ⏰ **Reminders** — set for yourself or other members, with critical repeats until acknowledged
+- 💬 **Multiple conversations** — separate chats by topic, each with independent context
+- 👥 **Multi-user household support** — each family member gets their own account
+- 🔐 **Private chats and role-ready access** — designed for owner/member household use
+- ⏰ **Reminders** — set for yourself or other household members
+- 🧠 **Long-term memory direction** — built around the idea that household context should compound over time
 - 🎨 **Dark theme PWA** — mobile-first, installable, works offline
-- ⚡ **Real-time streaming** — token-by-token with stop button
-- 🔧 **Model presets** — fast/deep modes, configurable per conversation
-- 🔒 **HTTPS** — automatic free certificates via Caddy
+- ⚡ **Real-time streaming** — token-by-token replies with stop support
+- 🔧 **Model presets** — configurable response modes per conversation
 - 🖼️ **Attachments** — images, files, and AI image generation
 - 🗣️ **Text-to-speech** — read messages aloud
+- 🔒 **Self-hosted with HTTPS support** — keep control of your own deployment
+
+## Why follow this project?
+
+Hearth is not just another chat wrapper.
+
+It is building toward a self-hosted household AI product where:
+
+- multiple family members can use the same system in a structured way
+- conversations can stay separated while household context grows over time
+- long-term memory belongs to the household, not to a platform
+- OpenClaw powers a real end-user product layer, not just a developer-facing core
+
+If you care about self-hosted AI, household-scale assistants, and long-term memory that compounds instead of resetting, this project is worth watching.
 
 ## Quick Start
 
@@ -79,6 +109,8 @@ npx hearth update
 Pulls latest code, checks OpenClaw compatibility, rebuilds, and updates the plugin.
 
 ## Architecture
+
+Hearth uses OpenClaw as the self-hosted AI core and adds the household-facing product layer on top.
 
 ```
 Hearth PWA (Vue 3 + Quasar)
@@ -136,8 +168,9 @@ All configuration is handled by `npx hearth setup`. Key environment variables in
 
 ## Privacy
 
-- All data stays on your hardware
-- Each user's conversations are isolated
+- Your data stays on hardware you control
+- Household use is first-class, not an afterthought
+- Private chats and structured access matter
 - No telemetry, no third-party data sharing
 - Open source — inspect every line
 
@@ -149,6 +182,8 @@ See the **[Enhancement Guide](docs/enhance-your-assistant.md)**.
 
 ## Roadmap
 
+Hearth starts as a household AI chat system and is intended to grow into a broader home and lifestyle assistant platform.
+
 - [ ] Privacy modes (household vs private conversations)
 - [ ] Household memory model
 - [ ] Task system
@@ -158,7 +193,7 @@ See the **[Enhancement Guide](docs/enhance-your-assistant.md)**.
 
 ## Contributing
 
-We're building this in the open. If you care about owning your AI memories, come build with us.
+We're building this in the open. If you care about self-hosted AI, household-scale assistants, and long-term memory that belongs to the people using it, come build with us.
 
 - 💬 [Open an issue](https://github.com/warrence/openclaw-hearth/issues)
 - 🔧 [Submit a PR](https://github.com/warrence/openclaw-hearth/pulls)
