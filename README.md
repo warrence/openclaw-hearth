@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="apps/web/public/brand/hearth-banner.png" alt="Hearth" width="600" />
+  <img src="apps/web/public/brand/hearth-banner.png" alt="Hearth" width="1000" />
 </p>
 
 <h1 align="center">Hearth</h1>
