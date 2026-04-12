@@ -2,8 +2,8 @@
   <div class="tts-card q-mt-md">
     <div class="tts-card__header tts-card__header--clickable" @click="modelsExpanded = !modelsExpanded">
       <div>
-        <div class="dashboard-card__label">Models</div>
-        <div class="tts-card__title">Fast and Deep presets</div>
+        <div class="dashboard-card__label">{{ t('modelPreset.sectionLabel') }}</div>
+        <div class="tts-card__title">{{ t('modelPreset.sectionTitle') }}</div>
       </div>
       <q-icon :name="modelsExpanded ? 'expand_less' : 'expand_more'" size="24px" />
     </div>
@@ -15,20 +15,20 @@
 
       <div v-else class="tts-card__body q-mt-md">
         <div class="dashboard-card__caption">
-          This is an OpenClaw-first bridge. Hearth stores Fast and Deep choices, but available model ids and control metadata come from the OpenClaw-facing catalog layer instead of a separate Hearth registry.
+          {{ t('modelPreset.intro') }}
         </div>
 
         <div class="model-preset-grid q-mt-md">
           <div v-for="preset in ['fast', 'deep']" :key="preset" class="tts-provider-panel">
             <div class="tts-provider-panel__header">
               <div>
-                <div class="tts-provider-panel__title">{{ preset === 'fast' ? 'Fast preset' : 'Deep preset' }}</div>
+                <div class="tts-provider-panel__title">{{ preset === 'fast' ? t('modelPreset.fastPreset') : t('modelPreset.deepPreset') }}</div>
                 <div class="tts-provider-panel__caption">
                   {{ modelCapabilitySummary(selectedModelOption(preset)) }}
                 </div>
               </div>
               <q-chip dense square class="dashboard-chip">
-                {{ selectedModelOption(preset)?.provider || 'unknown' }}
+                {{ selectedModelOption(preset)?.provider || t('modelPreset.providerUnknown') }}
               </q-chip>
             </div>
 
@@ -40,7 +40,7 @@
               option-caption="caption"
               emit-value
               map-options
-              label="Model"
+              :label="t('modelPreset.modelField')"
               dense
               dark
               outlined
@@ -57,7 +57,7 @@
               emit-value
               map-options
               clearable
-              label="Think level"
+              :label="t('modelPreset.thinkLevelField')"
               dense
               dark
               outlined
@@ -71,11 +71,11 @@
               unchecked-icon="psychology_alt"
               color="primary"
               class="q-mt-md"
-              label="Reasoning enabled"
+              :label="t('modelPreset.reasoningEnabled')"
             />
 
             <div class="tts-provider-panel__saved q-mt-md">
-              Saved: {{ modelPresetSettings.presets?.[preset]?.model_id || 'Not configured' }}
+              {{ t('modelPreset.savedValue', { value: modelPresetSettings.presets?.[preset]?.model_id || t('modelPreset.notConfigured') }) }}
             </div>
           </div>
         </div>
@@ -88,7 +88,7 @@
           no-caps
           rounded
           icon="save"
-          label="Save model settings"
+          :label="t('modelPreset.saveButton')"
           size="sm"
           :loading="modelPresetSaving"
           @click="saveModelPresetSettings"
@@ -101,9 +101,11 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useQuasar } from 'quasar'
+import { useI18n } from 'vue-i18n'
 import { getModelPresetSettings, getOpenClawModelOptions, updateModelPresetSettings } from 'src/lib/api'
 
 const $q = useQuasar()
+const { t } = useI18n({ useScope: 'global' })
 const modelsExpanded = ref(false)
 const modelPresetLoading = ref(false)
 const modelPresetSaving = ref(false)
@@ -195,9 +197,15 @@ function selectedModelCapabilities(preset) {
   }
 }
 
+function translatedThinkLevel(level) {
+  const key = `modelPreset.thinkLevels.${level}`
+  const translated = t(key)
+  return translated === key ? level : translated
+}
+
 function thinkLevelOptions(preset) {
   return selectedModelCapabilities(preset).think_levels.map((level) => ({
-    label: level.charAt(0).toUpperCase() + level.slice(1),
+    label: translatedThinkLevel(level),
     value: level,
   }))
 }
@@ -218,19 +226,19 @@ function normalizePresetControls(preset) {
 }
 
 function modelCapabilitySummary(model) {
-  if (!model) return 'No OpenClaw model selected yet.'
+  if (!model) return t('modelPreset.noModelSelected')
 
   const parts = []
 
   if (model.capabilities?.supports_think_level) {
-    parts.push(`think: ${model.capabilities.think_levels.join(', ')}`)
+    parts.push(t('modelPreset.capabilityThink', { levels: model.capabilities.think_levels.join(', ') }))
   }
 
   if (model.capabilities?.supports_reasoning_toggle) {
-    parts.push('reasoning toggle')
+    parts.push(t('modelPreset.capabilityReasoningToggle'))
   }
 
-  return parts.length ? parts.join(' • ') : 'No extra Hearth controls exposed for this model yet.'
+  return parts.length ? parts.join(' / ') : t('modelPreset.noExtraControls')
 }
 
 async function saveModelPresetSettings() {
@@ -259,7 +267,7 @@ async function saveModelPresetSettings() {
     const response = await updateModelPresetSettings(payload)
     modelPresetSettings.value = response
     hydrateModelPresetForm(response)
-    $q.notify({ type: 'positive', message: 'Model preset settings updated.' })
+    $q.notify({ type: 'positive', message: t('modelPreset.updatedNotice') })
   } catch (error) {
     $q.notify({ type: 'negative', message: error.message })
   } finally {

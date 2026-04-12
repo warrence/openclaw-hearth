@@ -12,22 +12,22 @@
     <div v-if="openclawStatus === 'not_configured'" class="openclaw-status-banner__content">
       <span class="openclaw-status-banner__icon">⚠️</span>
       <div>
-        <strong>AI model not configured</strong>
-        <p>Run <code>openclaw setup</code> on your server to configure your AI provider, then restart Hearth.</p>
+        <strong>{{ t('appShell.status.notConfiguredTitle') }}</strong>
+        <p>{{ t('appShell.status.notConfiguredBody') }}</p>
       </div>
     </div>
     <div v-else-if="openclawStatus === 'disconnected'" class="openclaw-status-banner__content">
       <span class="openclaw-status-banner__icon">🔌</span>
       <div>
-        <strong>OpenClaw is not running</strong>
-        <p>Start OpenClaw with <code>openclaw gateway start</code> on your server.</p>
+        <strong>{{ t('appShell.status.disconnectedTitle') }}</strong>
+        <p>{{ t('appShell.status.disconnectedBody') }}</p>
       </div>
     </div>
     <div v-else-if="openclawStatus === 'no_model'" class="openclaw-status-banner__content">
       <span class="openclaw-status-banner__icon">🤖</span>
       <div>
-        <strong>AI model not set up</strong>
-        <p>Run <code>openclaw setup</code> on your server to configure your AI provider and model.</p>
+        <strong>{{ t('appShell.status.noModelTitle') }}</strong>
+        <p>{{ t('appShell.status.noModelBody') }}</p>
       </div>
     </div>
   </div>
@@ -48,7 +48,7 @@
             borderless
             clearable
             standout="false"
-            placeholder="Search chats"
+            :placeholder="t('appShell.sidebar.searchPlaceholder')"
             class="app-sidebar__search"
           >
             <template #prepend>
@@ -66,7 +66,7 @@
             :disable="!activeProfile"
             @click="handleCreateConversation"
           >
-            <q-tooltip>New chat</q-tooltip>
+            <q-tooltip>{{ t('appShell.sidebar.newChatTooltip') }}</q-tooltip>
           </q-btn>
         </div>
 
@@ -87,9 +87,9 @@
           class="app-install-banner app-install-banner--notification"
         >
           <div class="app-install-banner__content">
-            <div class="app-install-banner__title">Enable notifications</div>
+            <div class="app-install-banner__title">{{ t('appShell.notificationBanner.title') }}</div>
             <div class="app-install-banner__body">
-              Get alerted when the agent finishes replying while the app is in the background.
+              {{ t('appShell.notificationBanner.body') }}
             </div>
           </div>
 
@@ -100,7 +100,7 @@
               round
               icon="close"
               color="grey-5"
-              aria-label="Dismiss notification prompt"
+              :aria-label="t('appShell.notificationBanner.dismissAria')"
               @click="dismissNotificationBanner"
             />
             <q-btn
@@ -109,7 +109,7 @@
               unelevated
               class="app-install-banner__button"
               :loading="pushSubscriptionSyncing"
-              label="Enable"
+              :label="t('appShell.notificationBanner.button')"
               @click="requestNotificationPermission"
             />
           </div>
@@ -120,7 +120,7 @@
           class="app-install-banner"
         >
           <div class="app-install-banner__content">
-            <div class="app-install-banner__title">Install app</div>
+            <div class="app-install-banner__title">{{ t('appShell.installBanner.title') }}</div>
             <div class="app-install-banner__body">
               {{ installBannerText }}
             </div>
@@ -133,7 +133,7 @@
               round
               icon="close"
               color="grey-5"
-              aria-label="Dismiss install prompt"
+              :aria-label="t('appShell.installBanner.dismissAria')"
               @click="dismissInstallBanner"
             />
             <q-btn
@@ -141,14 +141,14 @@
               no-caps
               unelevated
               class="app-install-banner__button"
-              :label="installPromptAvailable ? 'Install' : 'How to install'"
+              :label="installPromptAvailable ? t('appShell.installBanner.installButton') : t('appShell.installBanner.howToInstallButton')"
               @click="handleInstallApp"
             />
           </div>
         </div>
 
         <div v-if="showDebugPanel" class="app-debug-card">
-          <div class="app-debug-card__title">PWA debug</div>
+          <div class="app-debug-card__title">{{ t('appShell.debug.title') }}</div>
           <div class="app-debug-card__rows">
             <div v-for="row in debugStatusRows" :key="row.label" class="app-debug-card__row">
               <span class="app-debug-card__label">{{ row.label }}</span>
@@ -161,7 +161,7 @@
           <q-spinner color="primary" size="24px" />
         </div>
         <div v-else-if="profilesError" class="app-sidebar__state app-sidebar__state--compact text-body2">
-          {{ friendlyProfilesErrorDetail || 'Connection lost' }}
+          {{ friendlyProfilesErrorDetail || t('common.connectionLost') }}
         </div>
       </div>
 
@@ -173,7 +173,7 @@
         <template v-else>
           <div v-if="sidebarSearchLoading" class="app-sidebar__search-state">
             <q-spinner color="primary" size="18px" />
-            <span>Searching full history…</span>
+            <span>{{ t('appShell.sidebar.searchingHistory') }}</span>
           </div>
           <div v-else-if="sidebarSearchError" class="app-sidebar__search-state app-sidebar__search-state--error">
             {{ sidebarSearchError }}
@@ -203,7 +203,7 @@
                   {{ conversationSearchMetaLabel(chat) }}
                 </div>
                 <div v-if="isMatchedMessagePreview(chat)" class="app-sidebar__match-jump">
-                  Jump to match
+                  {{ t('appShell.sidebar.jumpToMatch') }}
                 </div>
               </div>
             </button>
@@ -213,13 +213,13 @@
             {{ activeConversationLoadError }}
           </div>
           <div v-else-if="activeProfile && !activeProfileConversationsLoaded" class="app-sidebar__empty">
-            Loading chats…
+            {{ t('appShell.sidebar.loadingChats') }}
           </div>
           <div v-else-if="activeProfile" class="app-sidebar__empty">
-            {{ sidebarSearch ? 'No chats match your search.' : 'No active chats yet.' }}
+            {{ sidebarSearch ? t('appShell.sidebar.noChatsMatch') : t('appShell.sidebar.noActiveChats') }}
           </div>
           <div v-else class="app-sidebar__empty">
-            Sign in to see your chats.
+            {{ t('appShell.sidebar.signInToSeeChats') }}
           </div>
 
         </template>
@@ -245,7 +245,7 @@
       type="button"
       class="app-shell-backdrop"
       :class="{ 'app-shell-backdrop--visible': mobileDrawerOpen }"
-      aria-label="Close app drawer"
+      :aria-label="t('appShell.drawer.closeAria')"
       :aria-hidden="!mobileDrawerOpen"
       :tabindex="mobileDrawerOpen ? 0 : -1"
       @click="closeMobileDrawer"
@@ -267,15 +267,15 @@
     <q-dialog v-model="renameDialog.open">
       <q-card class="overlay-card" style="min-width: 360px; max-width: 92vw">
         <q-card-section>
-          <div class="text-h6">Rename chat</div>
-          <div class="text-body2 text-grey-7 q-mt-xs">Keep it short and easy to find later.</div>
+          <div class="text-h6">{{ t('appShell.dialogs.renameTitle') }}</div>
+          <div class="text-body2 text-grey-7 q-mt-xs">{{ t('appShell.dialogs.renameHint') }}</div>
         </q-card-section>
         <q-card-section>
-          <q-input v-model="renameDialog.title" autofocus outlined maxlength="120" label="Chat title" @keyup.enter="submitRenameConversation" />
+          <q-input v-model="renameDialog.title" autofocus outlined maxlength="120" :label="t('appShell.dialogs.chatTitleLabel')" @keyup.enter="submitRenameConversation" />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat no-caps label="Cancel" v-close-popup />
-          <q-btn color="primary" no-caps label="Save" :loading="renameDialog.loading" @click="submitRenameConversation" />
+          <q-btn flat no-caps :label="t('common.cancel')" v-close-popup />
+          <q-btn color="primary" no-caps :label="t('common.save')" :loading="renameDialog.loading" @click="submitRenameConversation" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -283,14 +283,14 @@
     <q-dialog v-model="archiveDialog.open">
       <q-card class="overlay-card" style="min-width: 360px; max-width: 92vw">
         <q-card-section>
-          <div class="text-h6">Archive chat?</div>
+          <div class="text-h6">{{ t('appShell.dialogs.archiveTitle') }}</div>
           <div class="text-body2 text-grey-7 q-mt-xs">
-            {{ archiveDialog.conversation?.title || 'This chat' }} will disappear from the active sidebar list but stay in the database.
+            {{ t('appShell.dialogs.archiveDescription', { chatTitle: archiveDialog.conversation?.title || t('appShell.dialogs.thisChat') }) }}
           </div>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat no-caps label="Cancel" v-close-popup />
-          <q-btn color="primary" no-caps label="Archive" :loading="archiveDialog.loading" @click="submitArchiveConversation" />
+          <q-btn flat no-caps :label="t('common.cancel')" v-close-popup />
+          <q-btn color="primary" no-caps :label="t('common.archive')" :loading="archiveDialog.loading" @click="submitArchiveConversation" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -298,7 +298,7 @@
     <q-dialog v-model="settingsOpen" position="bottom" full-width class="settings-sheet" @hide="onSettingsClose">
       <q-card class="settings-card">
         <div class="settings-card__header">
-          <div class="settings-card__title">Settings</div>
+          <div class="settings-card__title">{{ t('appShell.settings.title') }}</div>
           <q-btn flat round dense icon="close" color="grey-5" class="settings-card__close-btn" @click="settingsOpen = false" />
         </div>
 
@@ -306,8 +306,8 @@
           <q-avatar size="72px" class="settings-card__hero-avatar">
             {{ activeProfile?.name?.charAt(0) || '?' }}
           </q-avatar>
-          <div class="settings-card__hero-name">{{ activeProfile?.name || 'Profile' }}</div>
-          <div class="settings-card__hero-sub">Edit profile</div>
+          <div class="settings-card__hero-name">{{ activeProfile?.name || t('common.profile') }}</div>
+          <div class="settings-card__hero-sub">{{ t('appShell.settings.editProfile') }}</div>
         </div>
 
         <div class="settings-card__body">
@@ -315,13 +315,13 @@
             <div class="settings-card__agent-name-row">
               <q-icon name="smart_toy" size="20px" />
               <div class="settings-card__agent-name-group">
-                <div class="settings-card__agent-name-label">Agent name</div>
+                <div class="settings-card__agent-name-label">{{ t('appShell.settings.agentName') }}</div>
                 <q-input
                   v-model="agentNameInput"
                   dense
                   dark
                   outlined
-                  :placeholder="`Default: ${agentDefaultName}`"
+                  :placeholder="t('appShell.settings.agentDefaultPlaceholder', { name: agentDefaultName })"
                   class="settings-card__agent-name-input"
                   @blur="saveAgentDisplayName"
                   @keyup.enter="saveAgentDisplayName"
@@ -330,10 +330,29 @@
             </div>
           </div>
 
+          <div class="settings-card__account-card">
+            <div class="settings-card__agent-name-row">
+              <q-icon name="translate" size="20px" />
+              <div class="settings-card__agent-name-group">
+                <div class="settings-card__agent-name-label">{{ t('appShell.settings.language') }}</div>
+                <q-select
+                  v-model="selectedLocale"
+                  :options="languageOptions"
+                  emit-value
+                  map-options
+                  dense
+                  dark
+                  outlined
+                  class="settings-card__agent-name-input"
+                />
+              </div>
+            </div>
+          </div>
+
           <div v-if="currentUser?.role === 'owner'" class="settings-card__account-card">
             <button type="button" class="settings-card__account-row" @click="handleSettingsDashboard">
               <q-icon name="space_dashboard" size="20px" />
-              <span>Dashboard</span>
+              <span>{{ t('appShell.settings.dashboard') }}</span>
               <q-icon name="chevron_right" size="18px" class="settings-card__account-row-chevron" />
             </button>
           </div>
@@ -346,7 +365,7 @@
               @click="settingsArchivedOpen = !settingsArchivedOpen"
             >
               <q-icon name="inventory_2" size="20px" />
-              <span>Archived chats</span>
+              <span>{{ t('appShell.settings.archivedChats') }}</span>
               <span v-if="archivedConversations.length" class="settings-card__count-badge">{{ archivedConversations.length }}</span>
               <q-icon :name="settingsArchivedOpen ? 'expand_less' : 'expand_more'" size="18px" class="settings-card__account-row-chevron" />
             </button>
@@ -373,7 +392,7 @@
               @click="pushSubscriptionActive ? handleDisableNotifications() : handleEnableNotifications()"
             >
               <q-icon :name="pushSubscriptionActive ? 'notifications_active' : 'notifications_off'" size="20px" />
-              <span>{{ pushSubscriptionActive ? 'Notifications on' : 'Enable notifications' }}</span>
+              <span>{{ pushSubscriptionActive ? t('appShell.settings.notificationsOn') : t('appShell.settings.enableNotifications') }}</span>
             </button>
           </div>
 
@@ -385,7 +404,7 @@
               @click="handleSettingsLogout"
             >
               <q-icon name="logout" size="20px" />
-              <span>Sign out</span>
+              <span>{{ t('common.signOut') }}</span>
             </button>
           </div>
 
@@ -398,7 +417,7 @@
       <q-card class="login-card">
         <div v-if="loginStep === 'profile'" class="login-card__step">
           <div class="login-card__header">
-            <div class="login-card__title">Who's there?</div>
+            <div class="login-card__title">{{ t('appShell.auth.whoIsThere') }}</div>
           </div>
 
           <div v-if="profilesLoading" class="login-card__state">
@@ -408,13 +427,13 @@
             <div class="login-failure-card">
               <div class="login-failure-card__badge" :class="{ 'login-failure-card__badge--auth': isProfilesAuthError }">
                 <q-icon :name="isProfilesAuthError ? 'lock_reset' : 'wifi_off'" size="18px" />
-                <span>{{ isProfilesAuthError ? 'Session expired' : 'Connection lost' }}</span>
+                <span>{{ isProfilesAuthError ? t('appShell.auth.sessionExpired') : t('common.connectionLost') }}</span>
               </div>
-              <div class="login-failure-card__title">{{ isProfilesAuthError ? 'Please sign in again' : 'We couldn\'t reach Hearth' }}</div>
+              <div class="login-failure-card__title">{{ isProfilesAuthError ? t('appShell.auth.pleaseSignInAgain') : t('appShell.auth.couldNotReach') }}</div>
               <div class="login-failure-card__body">
                 {{ isProfilesAuthError
-                  ? 'Your session is no longer valid. Choose your profile again to continue.'
-                  : 'We couldn\'t load the household profiles just now. Check your connection and try again.' }}
+                  ? t('appShell.auth.sessionNoLongerValid')
+                  : t('appShell.auth.couldNotLoadProfiles') }}
               </div>
               <div v-if="friendlyProfilesErrorDetail" class="login-failure-card__detail">{{ friendlyProfilesErrorDetail }}</div>
               <div class="login-failure-card__actions">
@@ -423,7 +442,7 @@
                   unelevated
                   no-caps
                   :icon="isProfilesAuthError ? 'person' : 'refresh'"
-                  :label="isProfilesAuthError ? 'Sign in again' : 'Retry'"
+                  :label="isProfilesAuthError ? t('appShell.auth.signInAgain') : t('common.retry')"
                   class="login-failure-card__primary"
                   @click="retryLoginRecovery()"
                 />
@@ -457,7 +476,7 @@
               type="password"
               outlined
               autofocus
-              label="Enter PIN"
+              :label="t('appShell.auth.enterPin')"
               inputmode="numeric"
               :error="!!loginError"
               :error-message="loginError"
@@ -469,7 +488,7 @@
               unelevated
               no-caps
               class="login-card__submit-btn"
-              label="Sign in"
+              :label="t('common.signIn')"
               :loading="loginLoading"
               :disable="!loginPin"
               @click="submitLogin"
@@ -483,9 +502,9 @@
       <q-card class="update-dialog-card" dark>
         <q-card-section class="text-center q-pt-lg">
           <q-icon name="system_update" size="48px" color="primary" />
-          <div class="text-h6 q-mt-md">Update Available</div>
+          <div class="text-h6 q-mt-md">{{ t('appShell.update.title') }}</div>
           <div class="text-body2 text-grey-5 q-mt-sm">
-            A new version of Hearth is ready. Please reload to continue.
+            {{ t('appShell.update.body') }}
           </div>
         </q-card-section>
         <q-card-actions align="center" class="q-pb-lg">
@@ -494,7 +513,7 @@
             unelevated
             no-caps
             rounded
-            label="Reload Now"
+            :label="t('appShell.update.reloadNow')"
             icon="refresh"
             :loading="applyingUpdate"
             @click="applyAppUpdate"
@@ -509,6 +528,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
+import { useI18n } from 'vue-i18n'
 import {
   archiveConversation,
   createConversation,
@@ -531,8 +551,10 @@ import {
 } from 'src/lib/api'
 import { normalizeAppChannelMessage } from 'src/lib/appChannel'
 import { APP_SHELL_KEY } from 'src/lib/appShell'
+import { setLocale as setAppLocale } from 'src/i18n'
 
 const $q = useQuasar()
+const { t, locale } = useI18n({ useScope: 'global' })
 const route = useRoute()
 const router = useRouter()
 const appVersionLabel = process.env.VITE_APP_VERSION || '0.0.81'
@@ -678,6 +700,17 @@ let sidebarSearchRequestId = 0
 let lastPresenceSignature = ''
 const MOBILE_DRAWER_TRANSITION_MS = 220
 
+const languageOptions = computed(() => ([
+  { label: t('locale.options.en'), value: 'en' },
+  { label: t('locale.options.ms'), value: 'ms' },
+  { label: t('locale.options.zhCn'), value: 'zh-CN' },
+]))
+const selectedLocale = computed({
+  get: () => String(locale.value || 'en'),
+  set: (nextLocale) => {
+    setAppLocale(nextLocale)
+  },
+})
 const isMobile = computed(() => $q.screen.width < 768)
 const isDashboardRoute = computed(() => route.path.startsWith('/dashboard'))
 const activeProfile = computed(() => profiles.value.find((profile) => profile.id === selectedProfileId.value) || null)
@@ -710,25 +743,25 @@ const showUpdateBanner = computed(() => !updateBannerDismissed.value && !!update
 const showNotificationBanner = computed(() => !!activeProfile.value && !pushSubscriptionActive.value && notificationPermission.value !== 'denied' && !notificationBannerDismissed.value)
 const showInstallBanner = computed(() => !installBannerDismissed.value && !showUpdateBanner.value && !showNotificationBanner.value && !isStandaloneApp.value && (installPromptAvailable.value || isIosInstallFlow.value))
 const debugStatusRows = computed(() => ([
-  { label: 'Version', value: appVersionLabel },
-  { label: 'Standalone app', value: isStandaloneApp.value ? 'yes' : 'no' },
-  { label: 'iPhone/iPad detected', value: isIosInstallFlow.value ? 'yes' : 'no' },
-  { label: 'Notification API', value: notificationApiAvailable.value ? 'yes' : 'no' },
-  { label: 'PushManager', value: pushManagerAvailable.value ? 'yes' : 'no' },
-  { label: 'Service worker ready', value: serviceWorkerReady.value ? 'yes' : 'no' },
-  { label: 'Notification permission', value: notificationPermission.value },
-  { label: 'Push subscription', value: pushSubscriptionActive.value ? 'active' : 'missing' },
-  { label: 'Active profile', value: activeProfile.value?.name || 'none' },
-  { label: 'Selected chat', value: selectedConversationId.value || 'none' },
-  { label: 'Last presence payload', value: lastPresencePayload.value },
-  { label: 'Last presence result', value: lastPresenceResult.value },
-  { label: 'Last presence at', value: lastPresenceAt.value },
-  { label: 'Last presence error', value: lastPresenceError.value },
+  { label: t('appShell.debug.version'), value: appVersionLabel },
+  { label: t('appShell.debug.standalone'), value: isStandaloneApp.value ? t('appShell.debug.yes') : t('appShell.debug.no') },
+  { label: t('appShell.debug.iosDetected'), value: isIosInstallFlow.value ? t('appShell.debug.yes') : t('appShell.debug.no') },
+  { label: t('appShell.debug.notificationApi'), value: notificationApiAvailable.value ? t('appShell.debug.yes') : t('appShell.debug.no') },
+  { label: t('appShell.debug.pushManager'), value: pushManagerAvailable.value ? t('appShell.debug.yes') : t('appShell.debug.no') },
+  { label: t('appShell.debug.serviceWorkerReady'), value: serviceWorkerReady.value ? t('appShell.debug.yes') : t('appShell.debug.no') },
+  { label: t('appShell.debug.notificationPermission'), value: notificationPermission.value },
+  { label: t('appShell.debug.pushSubscription'), value: pushSubscriptionActive.value ? t('appShell.debug.active') : t('appShell.debug.missing') },
+  { label: t('appShell.debug.activeProfile'), value: activeProfile.value?.name || t('appShell.debug.none') },
+  { label: t('appShell.debug.selectedChat'), value: selectedConversationId.value || t('appShell.debug.none') },
+  { label: t('appShell.debug.lastPresencePayload'), value: lastPresencePayload.value },
+  { label: t('appShell.debug.lastPresenceResult'), value: lastPresenceResult.value },
+  { label: t('appShell.debug.lastPresenceAt'), value: lastPresenceAt.value },
+  { label: t('appShell.debug.lastPresenceError'), value: lastPresenceError.value },
 ]))
 const installBannerText = computed(() => (
   installPromptAvailable.value
-    ? 'Add this chat app to your home screen for one-tap access.'
-    : 'On iPhone or iPad, tap Share and choose Add to Home Screen.'
+    ? t('appShell.installBanner.promptAvailableText')
+    : t('appShell.installBanner.iosInstallText')
 ))
 const isProfilesAuthError = computed(() => {
   const normalized = String(profilesError.value || '').trim().toLowerCase()
@@ -767,24 +800,24 @@ const friendlyProfilesErrorDetail = computed(() => {
 })
 const sidebarSectionCaption = computed(() => {
   if (!activeProfile.value) {
-    return 'No profile selected'
+    return t('appShell.sidebar.noProfileSelected')
   }
 
   if (!activeProfileConversationsLoaded.value) {
-    return conversationsLoading.value ? 'Loading chats…' : 'Checking chats…'
+    return conversationsLoading.value ? t('appShell.sidebar.loadingChats') : t('appShell.sidebar.checkingChats')
   }
 
   if (!normalizedSidebarSearch.value) {
-    return `${filteredActiveConversations.value.length} chats`
+    return t('appShell.sidebar.chatCount', { count: filteredActiveConversations.value.length })
   }
 
   if (sidebarSearchLoading.value || sidebarSearchResolvedQuery.value !== normalizedSidebarSearch.value) {
-    return 'Searching…'
+    return t('appShell.sidebar.searching')
   }
 
   const totalMatches = filteredActiveConversations.value.length + filteredArchivedConversations.value.length
 
-  return `${totalMatches} match${totalMatches === 1 ? '' : 'es'}`
+  return t('appShell.sidebar.matchCount', { count: totalMatches })
 })
 
 onMounted(async () => {
@@ -1069,7 +1102,7 @@ async function submitLogin() {
     await syncPushSubscription(user.id)
 
   } catch (error) {
-    loginError.value = error.message || 'Incorrect PIN. Try again.'
+    loginError.value = error.message || t('appShell.auth.incorrectPinTryAgain')
   } finally {
     loginLoading.value = false
   }
@@ -1118,7 +1151,7 @@ async function loadConversations(userId) {
     syncRouteQuery({ profile: userId, chat: nextConversation?.id || undefined })
   } catch (error) {
     const status = Number(error?.status || 0)
-    const message = error?.message || 'Unable to load conversations.'
+    const message = error?.message || t('appShell.errors.unableLoadConversations')
 
     conversationsLoadedByUser.value = {
       ...conversationsLoadedByUser.value,
@@ -1131,13 +1164,13 @@ async function loadConversations(userId) {
 
     if (status === 401) {
       enterLoginState()
-      $q.notify({ type: 'warning', message: 'Session expired. Please sign in again.' })
+      $q.notify({ type: 'warning', message: t('appShell.notices.sessionExpiredSignInAgain') })
       return
     }
 
     if (status === 403 && currentUser.value?.id && Number(userId) !== Number(currentUser.value.id)) {
       selectedProfileId.value = currentUser.value.id
-      $q.notify({ type: 'warning', message: 'This profile is not available in the current Nest session. Switched back to your signed-in profile.' })
+      $q.notify({ type: 'warning', message: t('appShell.notices.profileUnavailableSwitched') })
       return
     }
 
@@ -1227,7 +1260,7 @@ async function runSidebarSearch(userId, search) {
       return
     }
 
-    sidebarSearchError.value = error?.message || 'Search failed.'
+    sidebarSearchError.value = error?.message || t('appShell.errors.searchFailed')
     sidebarSearchResolvedQuery.value = ''
   } finally {
     if (requestId === sidebarSearchRequestId) {
@@ -1257,7 +1290,7 @@ async function ensureMessagesLoaded(conversationId, options = {}) {
     setConversationMessages(conversationId, data.map(normalizeMessage))
     return { ok: true, data }
   } catch (error) {
-    const message = error?.message || 'Unable to load this conversation.'
+    const message = error?.message || t('appShell.errors.unableLoadConversation')
     messageLoadErrors.value = {
       ...messageLoadErrors.value,
       [conversationId]: message,
@@ -1337,7 +1370,7 @@ function handleAppInstalled() {
   installPromptAvailable.value = false
   installBannerDismissed.value = true
   syncInstallState()
-  $q.notify({ type: 'positive', message: 'App installed.' })
+  $q.notify({ type: 'positive', message: t('appShell.notices.appInstalled') })
 }
 
 function handlePwaUpdateReady(event) {
@@ -1578,7 +1611,7 @@ async function handleInstallApp() {
   if (isIosInstallFlow.value) {
     $q.notify({
       type: 'info',
-      message: 'Use Safari Share → Add to Home Screen to install this app.',
+      message: t('appShell.installBanner.safariInstallHelp'),
       timeout: 3500,
     })
   }
@@ -1616,7 +1649,7 @@ async function syncPushSubscription(userId = selectedProfileId.value) {
 
 async function syncPushPresence(userId = selectedProfileId.value, subscription = null) {
   if (!userId || typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) {
-    lastPresenceError.value = 'unsupported environment'
+    lastPresenceError.value = t('appShell.presence.unsupportedEnvironment')
     return
   }
 
@@ -1625,7 +1658,7 @@ async function syncPushPresence(userId = selectedProfileId.value, subscription =
 
   if (isVisible && !conversationId) {
     lastPresencePayload.value = JSON.stringify({ userId, conversationId, isVisible })
-    lastPresenceResult.value = 'skipped: visible without chat'
+    lastPresenceResult.value = t('appShell.presence.skippedVisibleWithoutChat')
     return
   }
 
@@ -1633,7 +1666,7 @@ async function syncPushPresence(userId = selectedProfileId.value, subscription =
   lastPresencePayload.value = signature
 
   if (signature === lastPresenceSignature) {
-    lastPresenceResult.value = 'skipped: unchanged'
+    lastPresenceResult.value = t('appShell.presence.skippedUnchanged')
     return
   }
 
@@ -1642,7 +1675,7 @@ async function syncPushPresence(userId = selectedProfileId.value, subscription =
     const activeSubscription = subscription || await registration.pushManager.getSubscription()
 
     if (!activeSubscription) {
-      lastPresenceResult.value = 'skipped: no subscription'
+      lastPresenceResult.value = t('appShell.presence.skippedNoSubscription')
       return
     }
 
@@ -1653,24 +1686,24 @@ async function syncPushPresence(userId = selectedProfileId.value, subscription =
     })
 
     lastPresenceSignature = signature
-    lastPresenceResult.value = response?.debug ? JSON.stringify(response.debug) : 'ok'
+    lastPresenceResult.value = response?.debug ? JSON.stringify(response.debug) : t('appShell.presence.ok')
     lastPresenceAt.value = new Date().toLocaleTimeString()
     lastPresenceError.value = '—'
   } catch (error) {
-    lastPresenceError.value = error?.message || 'presence sync failed'
-    lastPresenceResult.value = 'failed'
+    lastPresenceError.value = error?.message || t('appShell.presence.syncFailed')
+    lastPresenceResult.value = t('appShell.presence.failed')
   }
 }
 
 async function requestNotificationPermission() {
   if (!activeProfile.value?.id) {
-    $q.notify({ type: 'warning', message: 'Pick a profile first.' })
+    $q.notify({ type: 'warning', message: t('appShell.notices.pickProfileFirst') })
     return
   }
 
   if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window) || typeof Notification === 'undefined') {
     notificationPermission.value = 'denied'
-    $q.notify({ type: 'negative', message: 'Push notifications are not supported on this device/browser.' })
+    $q.notify({ type: 'negative', message: t('appShell.notices.pushUnsupported') })
     return
   }
 
@@ -1700,9 +1733,9 @@ async function requestNotificationPermission() {
     await syncPushPresence(activeProfile.value.id, subscription)
     pushSubscriptionActive.value = true
     notificationBannerDismissed.value = true
-    $q.notify({ type: 'positive', message: 'Push notifications enabled.' })
+    $q.notify({ type: 'positive', message: t('appShell.notices.pushEnabled') })
   } catch (error) {
-    $q.notify({ type: 'negative', message: error?.message || 'Unable to enable push notifications.' })
+    $q.notify({ type: 'negative', message: error?.message || t('appShell.notices.unableEnablePush') })
   } finally {
     pushSubscriptionSyncing.value = false
   }
@@ -1732,9 +1765,9 @@ async function handleDisableNotifications() {
     }
 
     pushSubscriptionActive.value = false
-    $q.notify({ type: 'positive', message: 'Push notifications disabled.' })
+    $q.notify({ type: 'positive', message: t('appShell.notices.pushDisabled') })
   } catch (error) {
-    $q.notify({ type: 'negative', message: error?.message || 'Unable to disable push notifications.' })
+    $q.notify({ type: 'negative', message: error?.message || t('appShell.notices.unableDisablePush') })
   } finally {
     pushSubscriptionSyncing.value = false
   }
@@ -1772,7 +1805,7 @@ function notifyAssistantReply(conversationId, message) {
   notifiedReplyIds.add(message.id)
 
   const conversation = profileConversations.value.find((item) => item.id === conversationId)
-  const title = conversation?.title || 'Agent replied'
+  const title = conversation?.title || t('appShell.preview.agentReplied')
   const body = text.length > 140 ? `${text.slice(0, 137)}...` : text
   const notification = new Notification(title, {
     body,
@@ -1951,7 +1984,7 @@ async function handleCreateConversation() {
 
   try {
     const conversation = await createConversation(activeProfile.value.id, {
-      title: 'New Chat',
+      title: t('appShell.createConversationTitle'),
       agent_id: 'main',
     })
 
@@ -2086,10 +2119,12 @@ function chatPreview(conversationId) {
 
   if (latestMessage?.attachments?.length) {
     const [firstAttachment] = latestMessage.attachments
-    return `Attachment: ${firstAttachment?.name || `${latestMessage.attachments.length} files`}`
+    return t('appShell.preview.attachmentLabel', {
+      name: firstAttachment?.name || t('appShell.preview.filesCount', { count: latestMessage.attachments.length }),
+    })
   }
 
-  return 'No messages yet'
+  return t('appShell.preview.noMessagesYet')
 }
 
 function shouldShowConversationPreview() {
@@ -2106,7 +2141,7 @@ function isMatchedMessagePreview(conversation) {
 
 function conversationPreviewLine(conversation) {
   if (!shouldUseRemoteSidebarSearch.value) {
-    return conversation?.title || 'Untitled chat'
+    return conversation?.title || t('appShell.preview.untitledChat')
   }
 
   if (isMatchedMessagePreview(conversation)) {
@@ -2130,15 +2165,15 @@ function conversationSearchMetaLabel(conversation) {
   const matchedFields = conversation?.search_match?.matched_fields || []
 
   if (matchedFields.includes('title') && matchedFields.includes('message')) {
-    return 'Title + message'
+    return t('appShell.searchMeta.titleAndMessage')
   }
 
   if (matchedFields.includes('title')) {
-    return 'Title'
+    return t('appShell.searchMeta.title')
   }
 
   if (matchedFields.includes('message')) {
-    return 'Message'
+    return t('appShell.searchMeta.message')
   }
 
   return ''
