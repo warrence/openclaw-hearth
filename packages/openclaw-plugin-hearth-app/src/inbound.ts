@@ -202,24 +202,20 @@ export function createInboundHandler(
 
     const agentId = event.agentId || account.agentId;
     console.log(`[hearth-app] dispatch: agent=${agentId} event.agentId=${event.agentId} conversation=${event.conversationId}`);
-    const sessionKey = buildHearthSessionKey({
+    const legacySessionKey = buildHearthSessionKey({
       agentId,
       profileSlug: event.profileSlug,
       conversationUuid: event.conversationUuid,
     });
 
     // Acknowledge immediately — delivery is async
-    sendJson(res, 202, { accepted: true, sessionKey });
+    sendJson(res, 202, { accepted: true, sessionKey: legacySessionKey });
 
     const startedAt = Date.now();
-
-    // Register session so tool hooks can route status events back to this callback
-    registerSession(sessionKey, event.callbackUrl, event.conversationId);
 
     try {
       if (!channelRuntime) {
         console.error("[hearth-app] channelRuntime not available — cannot dispatch");
-        unregisterSession(sessionKey);
         void deliverErrorToCallbackUrl(event, new Error("channelRuntime not available"));
         return;
       }
@@ -324,6 +320,13 @@ IMPORTANT: Do not send intermediate progress messages like "I'm checking..." or 
         runtime: channelRuntime as Parameters<typeof resolveInboundRouteEnvelopeBuilderWithRuntime>[0]["runtime"],
       });
 
+      const sessionKeys = [...new Set([legacySessionKey, route.sessionKey].filter(Boolean))];
+
+      // Register both the legacy Hearth-computed key and the live route session key.
+      // Recent OpenClaw upgrades may normalize route.sessionKey differently, and the
+      // before_tool_call hook looks up ctx.sessionKey from the live route context.
+      registerSession(sessionKeys, event.callbackUrl, event.conversationId);
+
       const { storePath, body } = buildEnvelope({
         channel: "Hearth App",
         from: `Hearth / ${event.profileName}`,
@@ -369,7 +372,7 @@ IMPORTANT: Do not send intermediate progress messages like "I'm checking..." or 
           },
         },
         deliver: async (payload) => {
-          unregisterSession(sessionKey);
+          unregisterSession(sessionKeys);
           await deliverToCallbackUrl(event, payload, startedAt);
         },
         onRecordError: (err) => {
@@ -377,7 +380,7 @@ IMPORTANT: Do not send intermediate progress messages like "I'm checking..." or 
         },
         onDispatchError: (err, info) => {
           console.error(`[hearth-app] dispatch error (${info.kind}):`, err);
-          unregisterSession(sessionKey);
+          unregisterSession(sessionKeys);
           void deliverErrorToCallbackUrl(event, err);
         },
         replyOptions: {
@@ -398,7 +401,7 @@ IMPORTANT: Do not send intermediate progress messages like "I'm checking..." or 
       });
     } catch (err) {
       console.error("[hearth-app] inbound dispatch failed:", err);
-      unregisterSession(sessionKey);
+      unregisterSession(legacySessionKey);
       void deliverErrorToCallbackUrl(event, err);
     }
   };

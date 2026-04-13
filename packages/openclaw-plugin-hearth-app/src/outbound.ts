@@ -103,8 +103,11 @@ export async function postDeltaToCallbackUrl(
 const TOOL_LABELS: Record<string, string> = {
   web_search: "🔍 Searching the web",
   web_fetch: "🌐 Reading a webpage",
+  read: "📖 Reading files",
   Read: "📖 Reading files",
+  write: "💾 Writing files",
   Write: "💾 Writing files",
+  edit: "✏️ Editing files",
   Edit: "✏️ Editing files",
   exec: "💻 Running a command",
   memory_search: "🧠 Searching memory",
