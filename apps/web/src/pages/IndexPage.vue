@@ -23,20 +23,6 @@
           </div>
 
           <div class="chat-toolbar-actions">
-          <q-btn
-            v-if="currentUser"
-            flat
-            round
-            dense
-            icon="edit_square"
-            class="chat-new-btn"
-            :loading="creatingConversation"
-            :aria-label="t('appShell.sidebar.newChatTooltip')"
-            @click="handleCreateConversation"
-          >
-            <q-tooltip>{{ t('appShell.sidebar.newChatTooltip') }}</q-tooltip>
-          </q-btn>
-
           <q-select
             v-if="activeConversation"
             v-model="selectedModelPreset"
@@ -54,6 +40,20 @@
             class="model-select chat-header-model-select model-pill-select"
             :options="modelPresetOptions"
           />
+
+          <q-btn
+            v-if="currentUser"
+            flat
+            round
+            dense
+            icon="edit_square"
+            class="chat-new-btn"
+            :loading="creatingConversation"
+            :aria-label="t('appShell.sidebar.newChatTooltip')"
+            @click="handleCreateConversation"
+          >
+            <q-tooltip>{{ t('appShell.sidebar.newChatTooltip') }}</q-tooltip>
+          </q-btn>
 
           <q-btn
             v-if="activeConversation"
