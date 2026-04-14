@@ -260,6 +260,23 @@
         :class="{ 'app-page-shell--drawer-open': isMobile && mobileDrawerOpen }"
         :data-drawer-open="isMobile && mobileDrawerOpen ? 'true' : 'false'"
       >
+        <q-btn
+          v-if="activeProfile && !(isMobile && mobileDrawerOpen)"
+          unelevated
+          no-caps
+          color="primary"
+          icon="add"
+          class="app-shell__quick-new-chat"
+          :class="{ 'app-shell__quick-new-chat--mobile': isMobile }"
+          :round="isMobile"
+          :label="isMobile ? undefined : t('appShell.createConversationTitle')"
+          :loading="creatingConversation"
+          :aria-label="t('appShell.sidebar.newChatTooltip')"
+          @click="handleCreateConversation"
+        >
+          <q-tooltip>{{ t('appShell.sidebar.newChatTooltip') }}</q-tooltip>
+        </q-btn>
+
         <router-view />
       </div>
     </div>
@@ -2305,6 +2322,26 @@ async function syncRouteQuery(patch) {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+
+.app-page-shell {
+  position: relative;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.app-shell__quick-new-chat {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 6;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.24);
+  background: linear-gradient(135deg, #7c3aed, #2563eb) !important;
+  color: #fff !important;
 }
 
 .app-sidebar__top {
@@ -2779,6 +2816,20 @@ async function syncRouteQuery(patch) {
     height: 100dvh;
     overflow: hidden;
     transition: filter 220ms ease, opacity 220ms ease;
+  }
+
+  .app-shell__quick-new-chat {
+    position: fixed;
+    top: auto;
+    right: 16px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 104px);
+    width: 56px;
+    min-width: 56px;
+    height: 56px;
+    min-height: 56px;
+    padding: 0;
+    border-radius: 999px;
+    z-index: 12;
   }
 
   .app-page-shell--drawer-open {
