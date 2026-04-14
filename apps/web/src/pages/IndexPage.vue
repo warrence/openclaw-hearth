@@ -9,20 +9,34 @@
             round
             dense
             icon="menu"
-            aria-label="Open app drawer"
+            :aria-label="t('dashboard.openDrawerAria')"
             class="mobile-sidebar-toggle"
             @click="openMobileDrawer"
           />
 
           <q-chip v-if="isArchivedConversation" class="archive-chip" square icon="inventory_2">
-            Archived
+            {{ t('chatPage.header.archivedChip') }}
           </q-chip>
 
           <div class="chat-title-area">
-            <span v-if="activeConversation" class="chat-title-text">{{ activeConversation.title || 'Chat' }}</span>
+            <span v-if="activeConversation" class="chat-title-text">{{ activeConversation.title || t('chatPage.header.chatTitleFallback') }}</span>
           </div>
 
           <div class="chat-toolbar-actions">
+          <q-btn
+            v-if="currentUser"
+            flat
+            round
+            dense
+            icon="edit_square"
+            class="chat-new-btn"
+            :loading="creatingConversation"
+            :aria-label="t('appShell.sidebar.newChatTooltip')"
+            @click="handleCreateConversation"
+          >
+            <q-tooltip>{{ t('appShell.sidebar.newChatTooltip') }}</q-tooltip>
+          </q-btn>
+
           <q-select
             v-if="activeConversation"
             v-model="selectedModelPreset"
@@ -48,7 +62,7 @@
             dense
             icon="more_horiz"
             class="chat-menu-btn"
-            aria-label="Chat options"
+            :aria-label="t('chatPage.header.chatOptionsAria')"
           >
             <q-menu
               anchor="bottom end"
@@ -58,24 +72,24 @@
               <q-list style="min-width: 220px;">
                 <q-item clickable v-close-popup @click="handleChatShare">
                   <q-item-section avatar><q-icon name="share" /></q-item-section>
-                  <q-item-section>Share</q-item-section>
+                  <q-item-section>{{ t('chatPage.actions.share') }}</q-item-section>
                 </q-item>
                 <q-item clickable v-close-popup @click="promptRenameConversation(activeConversation)">
                   <q-item-section avatar><q-icon name="edit" /></q-item-section>
-                  <q-item-section>Rename</q-item-section>
+                  <q-item-section>{{ t('chatPage.actions.rename') }}</q-item-section>
                 </q-item>
                 <q-item clickable v-close-popup @click="openViewFilesDialog">
                   <q-item-section avatar><q-icon name="attach_file" /></q-item-section>
-                  <q-item-section>View files in chat</q-item-section>
+                  <q-item-section>{{ t('chatPage.actions.viewFiles') }}</q-item-section>
                 </q-item>
                 <q-item v-if="!isArchivedConversation" clickable v-close-popup @click="promptArchiveConversation(activeConversation)">
                   <q-item-section avatar><q-icon name="archive" /></q-item-section>
-                  <q-item-section>Archive</q-item-section>
+                  <q-item-section>{{ t('common.archive') }}</q-item-section>
                 </q-item>
                 <q-separator />
                 <q-item clickable v-close-popup class="text-negative" @click="handleChatDelete">
                   <q-item-section avatar><q-icon name="delete_outline" color="red-4" /></q-item-section>
-                  <q-item-section>Delete</q-item-section>
+                  <q-item-section>{{ t('common.delete') }}</q-item-section>
                 </q-item>
               </q-list>
             </q-menu>
@@ -85,7 +99,7 @@
       </header>
 
       <div v-if="isArchivedConversation" class="chat-notice">
-        This chat is archived. You can still read it, rename it, and restore it when you want it back in the active list.
+        {{ t('chatPage.notices.archivedConversation') }}
       </div>
 
       <div v-if="conversationError && !showConversationLoadState" class="chat-notice chat-notice--error">
@@ -103,11 +117,11 @@
           <div class="conversation-failure-card">
             <div class="conversation-failure-card__badge">
               <q-icon name="wifi_off" size="18px" />
-              <span>Connection lost</span>
+              <span>{{ t('common.connectionLost') }}</span>
             </div>
-            <div class="conversation-failure-card__title">This chat did not load</div>
+            <div class="conversation-failure-card__title">{{ t('chatPage.loadState.title') }}</div>
             <div class="conversation-failure-card__body">
-              We couldn&apos;t reach this conversation just now. Check your connection and try again.
+              {{ t('chatPage.loadState.body') }}
             </div>
             <div class="conversation-failure-card__detail">
               {{ activeConversationLoadError }}
@@ -118,7 +132,7 @@
                 unelevated
                 no-caps
                 icon="refresh"
-                label="Retry"
+                :label="t('common.retry')"
                 class="conversation-failure-card__primary"
                 :loading="retryingConversationLoad"
                 @click="retryConversationLoad"
@@ -127,7 +141,7 @@
                 flat
                 no-caps
                 icon="west"
-                label="Back to chats"
+                :label="t('chatPage.loadState.backToChats')"
                 class="conversation-failure-card__secondary"
                 @click="returnToChatList"
               />
@@ -152,8 +166,8 @@
               class="typing-row"
               :class="{ 'typing-row--generating': message.meta?.isGeneratingImage }"
             >
-              <div class="typing-row__label">{{ message.meta?.isGeneratingImage ? 'Generating image…' : AGENT_DISPLAY_NAME }}</div>
-              <div class="typing-row__dots" :aria-label="message.meta?.isGeneratingImage ? 'Generating image' : `${AGENT_DISPLAY_NAME} is thinking`">
+              <div class="typing-row__label">{{ message.meta?.isGeneratingImage ? t('chatPage.typing.generatingImage') : AGENT_DISPLAY_NAME }}</div>
+              <div class="typing-row__dots" :aria-label="message.meta?.isGeneratingImage ? t('chatPage.typing.generatingImageAria') : t('chatPage.typing.agentThinkingWithName', { name: AGENT_DISPLAY_NAME })">
                 <span></span><span></span><span></span>
               </div>
             </div>
@@ -222,10 +236,10 @@
                     dense
                     icon="content_copy"
                     class="message-action-btn"
-                    aria-label="Copy message"
+                    :aria-label="t('chatPage.messageActions.copyAria')"
                     @click="copyMessage(message)"
                   >
-                    <q-tooltip anchor="top middle" self="bottom middle" :offset="[0, 4]">Copy</q-tooltip>
+                    <q-tooltip anchor="top middle" self="bottom middle" :offset="[0, 4]">{{ t('chatPage.messageActions.copyTooltip') }}</q-tooltip>
                   </q-btn>
                   <q-btn
                     flat
@@ -233,10 +247,10 @@
                     dense
                     :icon="speakingMessageId === message.id ? 'volume_off' : 'volume_up'"
                     :class="['message-action-btn', { 'message-action-btn--speaking': speakingMessageId === message.id }]"
-                    aria-label="Speak message"
+                    :aria-label="t('chatPage.messageActions.speakAria')"
                     @click="speakMessage(message)"
                   >
-                    <q-tooltip anchor="top middle" self="bottom middle" :offset="[0, 4]">{{ speakingMessageId === message.id ? 'Stop' : 'Speak' }}</q-tooltip>
+                    <q-tooltip anchor="top middle" self="bottom middle" :offset="[0, 4]">{{ speakingMessageId === message.id ? t('chatPage.messageActions.stopTooltip') : t('chatPage.messageActions.speakTooltip') }}</q-tooltip>
                   </q-btn>
                   <q-btn
                     flat
@@ -244,10 +258,10 @@
                     dense
                     icon="share"
                     class="message-action-btn"
-                    aria-label="Share message"
+                    :aria-label="t('chatPage.messageActions.shareAria')"
                     @click="shareMessage(message)"
                   >
-                    <q-tooltip anchor="top middle" self="bottom middle" :offset="[0, 4]">Share</q-tooltip>
+                    <q-tooltip anchor="top middle" self="bottom middle" :offset="[0, 4]">{{ t('chatPage.messageActions.shareTooltip') }}</q-tooltip>
                   </q-btn>
                 </div>
               </div>
@@ -257,10 +271,10 @@
           <div v-if="showActiveThinkingIndicator" class="message-row message-row--assistant">
             <div class="typing-row">
               <div class="typing-row__label">{{ AGENT_DISPLAY_NAME }}</div>
-              <div v-if="activePendingReplyState?.status?.label && activePendingReplyState.status.label !== 'Sending…' && activePendingReplyState.status.label !== 'Queued for OpenClaw'" class="typing-row__tool-label">
+              <div v-if="shouldShowToolStatusLabel(activePendingReplyState?.status?.label)" class="typing-row__tool-label">
                 {{ activePendingReplyState.status.label }}
               </div>
-              <div v-else class="typing-row__dots" aria-label="Agent is thinking">
+              <div v-else class="typing-row__dots" :aria-label="t('chatPage.typing.agentThinkingAria')">
                 <span></span><span></span><span></span>
               </div>
             </div>
@@ -271,9 +285,9 @@
         </div>
 
         <button v-if="!activeConversation && !messagesLoading" type="button" class="empty-state empty-state--tappable" @click="focusComposerInput">
-          <div class="empty-state__eyebrow">Ready</div>
-          <div class="empty-state__title">What's on your mind?</div>
-          <div class="empty-state__body">Tap here or the text box below to start.</div>
+          <div class="empty-state__eyebrow">{{ t('chatPage.emptyState.eyebrow') }}</div>
+          <div class="empty-state__title">{{ t('chatPage.emptyState.title') }}</div>
+          <div class="empty-state__body">{{ t('chatPage.emptyState.body') }}</div>
         </button>
 
         <transition name="scroll-latest">
@@ -284,7 +298,7 @@
             @click="scrollToLatest"
           >
             <q-icon name="south" size="18px" />
-            <span>Latest</span>
+            <span>{{ t('chatPage.scrollToLatest') }}</span>
           </button>
         </transition>
       </div>
@@ -304,9 +318,9 @@
             <div class="composer-attachments__header">
               <div>
                 <div class="composer-attachments__title">
-                  {{ pendingAttachments.length }} attachment{{ pendingAttachments.length === 1 ? '' : 's' }} ready
+                  {{ t('chatPage.attachments.readyCount', { count: pendingAttachments.length }) }}
                 </div>
-                <div class="composer-attachments__hint">Images, PDFs, and text files up to 12 MB each</div>
+                <div class="composer-attachments__hint">{{ t('chatPage.attachments.hint') }}</div>
               </div>
               <div class="composer-attachments__count">{{ pendingAttachments.length }}/8</div>
             </div>
@@ -344,7 +358,7 @@
                   size="sm"
                   icon="close"
                   color="grey-5"
-                  aria-label="Remove attachment"
+                  :aria-label="t('chatPage.attachments.removeAria')"
                   @click="removePendingAttachment(attachment.localId)"
                 />
               </div>
@@ -353,8 +367,8 @@
 
           <div v-if="isImageEditMode" class="composer-edit-mode">
             <div class="composer-edit-mode__banner">
-              <div class="composer-edit-mode__eyebrow">Editing attached image</div>
-              <div class="composer-edit-mode__body">Use the image as source and describe what you want changed.</div>
+              <div class="composer-edit-mode__eyebrow">{{ t('chatPage.imageEdit.bannerEyebrow') }}</div>
+              <div class="composer-edit-mode__body">{{ t('chatPage.imageEdit.bannerBody') }}</div>
             </div>
 
             <div class="composer-edit-mode__chips">
@@ -378,7 +392,7 @@
               dense
               icon="attach_file"
               class="composer-plus-btn"
-              aria-label="Add attachment"
+              :aria-label="t('chatPage.attachments.addAria')"
               :disable="isArchivedConversation || sendingMessage || uploadingAttachments"
               @click="openAttachmentPicker"
             />
@@ -392,7 +406,7 @@
                 type="textarea"
                 rows="1"
                 max-rows="6"
-                :placeholder="isImageEditMode ? 'Describe what you want changed…' : `Message ${AGENT_DISPLAY_NAME}…`"
+                :placeholder="isImageEditMode ? t('chatPage.composer.editPlaceholder') : t('chatPage.composer.messagePlaceholder', { name: AGENT_DISPLAY_NAME })"
                 input-class="composer-input"
                 :disable="isArchivedConversation || sendingMessage || uploadingAttachments"
                 @focus="handleComposerFocus"
@@ -400,7 +414,7 @@
                 @keyup.enter.exact.prevent="handleSendMessage"
               />
               <div v-if="uploadingAttachments" class="composer-uploading">
-                Uploading attachment{{ pendingAttachments.length === 1 ? '' : 's' }}…
+                {{ t('chatPage.attachments.uploadingCount', { count: pendingAttachments.length }) }}
               </div>
             </div>
 
@@ -410,7 +424,7 @@
               no-caps
               unelevated
               icon="unarchive"
-              label="Restore"
+              :label="t('chatPage.actions.restore')"
               class="composer-restore-btn"
               :loading="restoreLoading"
               @click="handleRestoreConversation(activeConversation)"
@@ -446,7 +460,7 @@
       <q-dialog v-model="viewFilesDialogOpen">
         <q-card class="chat-files-card">
           <q-card-section class="chat-files-card__header">
-            <div class="chat-files-card__title">Files in this chat</div>
+            <div class="chat-files-card__title">{{ t('chatPage.filesDialog.title') }}</div>
             <q-btn flat round dense icon="close" color="grey-5" v-close-popup />
           </q-card-section>
 
@@ -467,7 +481,7 @@
           </q-card-section>
 
           <q-card-section v-else class="chat-files-card__empty">
-            No files have been shared in this chat yet.
+            {{ t('chatPage.filesDialog.empty') }}
           </q-card-section>
         </q-card>
       </q-dialog>
@@ -481,7 +495,7 @@
             icon="close"
             color="white"
             class="image-lightbox__close"
-            aria-label="Close image preview"
+            :aria-label="t('chatPage.lightbox.closeAria')"
             @click="closeImageLightbox"
           />
 
@@ -515,7 +529,7 @@
               no-caps
               color="white"
               icon="edit"
-              label="Edit with this"
+              :label="t('chatPage.lightbox.editWithThis')"
               class="image-lightbox__action"
               @click="handleLightboxEditWithThis"
             />
@@ -524,7 +538,7 @@
               no-caps
               color="white"
               icon="share"
-              label="Share"
+              :label="t('chatPage.actions.share')"
               class="image-lightbox__action"
               @click="handleLightboxShare"
             />
@@ -533,7 +547,7 @@
               no-caps
               color="white"
               icon="download"
-              label="Save"
+              :label="t('common.save')"
               class="image-lightbox__action"
               @click="handleLightboxSave"
             />
@@ -548,6 +562,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
+import { useI18n } from 'vue-i18n'
 import {
   deleteConversation,
   getConversation,
@@ -575,6 +590,7 @@ import {
 const $q = useQuasar()
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n({ useScope: 'global' })
 
 const {
   isMobile,
@@ -583,6 +599,7 @@ const {
   activeMessages,
   messagesByConversation,
   messagesLoading,
+  creatingConversation,
   restoreLoading,
   isArchivedConversation,
   handleRestoreConversation,
@@ -600,32 +617,36 @@ const {
   notifyAssistantReply,
 } = useAppShell()
 
-const modelPresetOptions = [
-  { label: 'Fast', value: 'fast' },
-  { label: 'Deep', value: 'deep' },
-]
+const modelPresetOptions = computed(() => ([
+  { label: t('chatPage.modelPreset.fast'), value: 'fast' },
+  { label: t('chatPage.modelPreset.deep'), value: 'deep' },
+]))
 const appVersionLabel = process.env.VITE_APP_VERSION || '0.0.48'
 const { agentDisplayName } = useAppShell()
-const AGENT_DISPLAY_NAME = computed(() => agentDisplayName?.value || 'Assistant')
+const AGENT_DISPLAY_NAME = computed(() => agentDisplayName?.value || t('chatPage.agentFallback'))
+const sendingStatusLabel = computed(() => t('chatPage.status.sending'))
+const queuedForOpenClawStatusLabel = computed(() => t('chatPage.status.queuedForOpenClaw'))
+const defaultConversationTitle = computed(() => t('appShell.createConversationTitle'))
+const LEGACY_DEFAULT_CONVERSATION_TITLE = 'New Chat'
 
-const imageEditQuickPrompts = [
+const imageEditQuickPrompts = computed(() => ([
   {
-    label: 'Product photo',
-    prompt: 'Use the attached image as the source. Turn it into a clean product photo while preserving the subject and core composition.',
+    label: t('chatPage.imageEdit.quickPrompts.productPhoto.label'),
+    prompt: t('chatPage.imageEdit.quickPrompts.productPhoto.prompt'),
   },
   {
-    label: 'Remove background',
-    prompt: 'Use the attached image as the source. Remove the background while preserving the main subject, edges, and proportions.',
+    label: t('chatPage.imageEdit.quickPrompts.removeBackground.label'),
+    prompt: t('chatPage.imageEdit.quickPrompts.removeBackground.prompt'),
   },
   {
-    label: 'Improve lighting',
-    prompt: 'Use the attached image as the source. Improve the lighting and overall clarity while keeping the subject, pose, and composition consistent.',
+    label: t('chatPage.imageEdit.quickPrompts.improveLighting.label'),
+    prompt: t('chatPage.imageEdit.quickPrompts.improveLighting.prompt'),
   },
   {
-    label: 'Stylize',
-    prompt: 'Use the attached image as the source. Apply a stylized look while preserving the original subject, framing, and recognizable details.',
+    label: t('chatPage.imageEdit.quickPrompts.stylize.label'),
+    prompt: t('chatPage.imageEdit.quickPrompts.stylize.prompt'),
   },
-]
+]))
 
 const draft = ref('')
 const sendingMessage = ref(false)
@@ -751,6 +772,21 @@ const canSendMessage = computed(() => (
 
 function emptyConversationStatus() {
   return { state: '', label: '', elapsedMs: 0, note: '' }
+}
+
+function shouldShowToolStatusLabel(label) {
+  if (!label) {
+    return false
+  }
+
+  const genericLabels = new Set([
+    sendingStatusLabel.value,
+    queuedForOpenClawStatusLabel.value,
+    'Sending…',
+    'Queued for OpenClaw',
+  ])
+
+  return !genericLabels.has(label)
 }
 
 function normalizePendingReplyState(state = {}) {
@@ -1167,7 +1203,7 @@ watch(selectedModelPreset, async (preset) => {
       model_preset: previousPreset,
     })
     setPendingReplyState(activeConversation.value.id, {
-      error: error?.message || 'Unable to update model selection.',
+      error: error?.message || t('chatPage.errors.unableUpdateModelSelection'),
     })
   } finally {
     syncingModelPreset.value = false
@@ -1187,12 +1223,12 @@ function updatePendingAssistantInterrupted(conversationId) {
 
   upsertMessage(conversationId, {
     ...pendingAssistant,
-    displayContent: pendingAssistant.displayContent || 'Reply may still be in progress…',
+    displayContent: pendingAssistant.displayContent || t('chatPage.status.replyMayStillBeInProgressEllipsis'),
     meta: {
       ...pendingAssistant.meta,
       isInterrupted: true,
       isTypingRow: false,
-      statusLabel: 'App was backgrounded. Checking again when you return…',
+      statusLabel: t('chatPage.status.appBackgroundedCheckingWhenBack'),
     },
   })
 }
@@ -1223,7 +1259,7 @@ async function reconcileInterruptedConversation() {
       error: '',
       status: {
         state: 'reconnecting',
-        label: 'Checking for reply…',
+        label: t('chatPage.status.checkingForReply'),
         elapsedMs: 0,
         note: '',
       },
@@ -1250,7 +1286,7 @@ function handleVisibilityChange() {
         error: '',
         status: {
           state: 'interrupted',
-          label: 'Reply may still be in progress',
+          label: t('chatPage.status.replyMayStillBeInProgress'),
           elapsedMs: 0,
           note: '',
         },
@@ -1400,7 +1436,7 @@ async function handleSendMessage() {
     error: '',
     status: {
       state: 'queued',
-      label: 'Sending…',
+      label: sendingStatusLabel.value,
       elapsedMs: 0,
       note: '',
     },
@@ -1433,14 +1469,14 @@ async function handleSendMessage() {
         upsertMessage(conversationId, {
           id: streamPlaceholderId,
           role: 'assistant',
-          content: isImageGeneration ? 'Generating image…' : '',
+          content: isImageGeneration ? t('chatPage.typing.generatingImage') : '',
           created_at: new Date().toISOString(),
           meta: {
             isPlaceholder: true,
             isTypingRow: !isImageGeneration,
             isGeneratingImage: isImageGeneration,
             elapsedMs: 0,
-            statusLabel: isImageGeneration ? 'Generating image…' : '',
+            statusLabel: isImageGeneration ? t('chatPage.typing.generatingImage') : '',
           },
         })
       },
@@ -1563,7 +1599,7 @@ async function handleSendMessage() {
           error: '',
           status: {
             state: normalizedStatus.state || '',
-            label: normalizedStatus.label || 'Working',
+            label: normalizedStatus.label || t('chatPage.status.working'),
             elapsedMs: normalizedStatus.elapsedMs || 0,
             note: '',
           },
@@ -1581,7 +1617,7 @@ async function handleSendMessage() {
           error: '',
           status: {
             state: normalizedProgress.state || 'running',
-            label: normalizedProgress.label || 'Working',
+            label: normalizedProgress.label || t('chatPage.status.working'),
             elapsedMs: normalizedProgress.elapsedMs || 0,
             note: '',
           },
@@ -1604,11 +1640,15 @@ async function handleSendMessage() {
 
         // Re-fetch conversation after delay to pick up async title generation
         const currentTitle = conversationSnapshot?.title
-        if (!currentTitle || currentTitle === 'New Chat') {
+        if (!currentTitle || currentTitle === defaultConversationTitle.value || currentTitle === LEGACY_DEFAULT_CONVERSATION_TITLE) {
           setTimeout(async () => {
             try {
               const updated = await getConversation(conversationId)
-              if (updated?.title && updated.title !== 'New Chat') {
+              if (
+                updated?.title
+                && updated.title !== defaultConversationTitle.value
+                && updated.title !== LEGACY_DEFAULT_CONVERSATION_TITLE
+              ) {
                 updateConversationRecord(updated)
               }
             } catch { /* best effort */ }
@@ -1633,7 +1673,7 @@ async function handleSendMessage() {
           error: normalizedError.message,
           status: {
             state: 'error',
-            label: 'Something went wrong',
+            label: t('chatPage.status.somethingWentWrong'),
             elapsedMs: normalizedError.elapsedMs || 0,
             note: '',
           },
@@ -1651,7 +1691,7 @@ async function handleSendMessage() {
         error: '',
         status: {
           state: 'running',
-          label: 'Reply may still be in progress',
+          label: t('chatPage.status.replyMayStillBeInProgress'),
           elapsedMs: 0,
           note: '',
         },
@@ -1674,8 +1714,8 @@ async function handleSendMessage() {
             pending: false,
             interrupted: false,
             needsReconcile: false,
-            error: 'Offline — message queued. Will send when reconnected.',
-            status: { state: 'error', label: 'Queued (offline)', elapsedMs: 0, note: '' },
+            error: t('chatPage.errors.offlineQueuedMessage'),
+            status: { state: 'error', label: t('chatPage.status.queuedOffline'), elapsedMs: 0, note: '' },
           })
         } catch {
           // Queue failed — restore draft
@@ -1683,7 +1723,7 @@ async function handleSendMessage() {
           setPendingReplyState(conversationId, {
             pending: false, interrupted: false, needsReconcile: false,
             error: error.message,
-            status: { state: 'error', label: 'Something went wrong', elapsedMs: 0, note: '' },
+            status: { state: 'error', label: t('chatPage.status.somethingWentWrong'), elapsedMs: 0, note: '' },
           })
         }
       } else {
@@ -1699,7 +1739,7 @@ async function handleSendMessage() {
           error: error.message,
           status: {
             state: 'error',
-            label: 'Something went wrong',
+            label: t('chatPage.status.somethingWentWrong'),
             elapsedMs: 0,
             note: '',
           },
@@ -1758,7 +1798,7 @@ async function handleAttachmentSelection(event) {
   const remainingSlots = Math.max(0, 8 - pendingAttachments.value.length)
 
   if (remainingSlots === 0) {
-    $q.notify({ type: 'warning', message: 'You can attach up to 8 files at once.' })
+    $q.notify({ type: 'warning', message: t('chatPage.attachments.maxFiles') })
     return
   }
 
@@ -1769,7 +1809,7 @@ async function handleAttachmentSelection(event) {
   try {
     for (const file of selectedFiles) {
       if (pendingAttachments.value.some((attachment) => attachment.fingerprint === attachmentFingerprint(file))) {
-        skippedFiles.push(`${file.name} is already attached.`)
+        skippedFiles.push(t('chatPage.attachments.fileAlreadyAttached', { name: file.name }))
         continue
       }
 
@@ -1794,7 +1834,7 @@ async function handleAttachmentSelection(event) {
           },
         ]
       } catch (error) {
-        skippedFiles.push(error?.message ? `${file.name}: ${error.message}` : `${file.name}: upload failed`)
+        skippedFiles.push(error?.message ? `${file.name}: ${error.message}` : t('chatPage.attachments.fileUploadFailed', { name: file.name }))
       }
     }
 
@@ -1875,14 +1915,14 @@ function updatePendingAssistantStatus(conversationId, status) {
 
   upsertMessage(conversationId, {
     ...pendingAssistant,
-    displayContent: hasStreamedText ? pendingAssistant.displayContent : (isGeneratingImage ? 'Generating image…' : ''),
+    displayContent: hasStreamedText ? pendingAssistant.displayContent : (isGeneratingImage ? t('chatPage.typing.generatingImage') : ''),
     meta: {
       ...pendingAssistant.meta,
       isGeneratingImage,
       isTypingRow: isGeneratingImage ? false : !hasStreamedText,
       elapsedMs: status.elapsedMs || 0,
       phase: status.phase || '',
-      statusLabel: isGeneratingImage ? status.label || 'Generating image…' : pendingAssistant.meta?.statusLabel,
+      statusLabel: isGeneratingImage ? status.label || t('chatPage.typing.generatingImage') : pendingAssistant.meta?.statusLabel,
     },
   })
 }
@@ -1897,8 +1937,8 @@ function updatePendingAssistantError(conversationId, message) {
   upsertMessage(conversationId, {
     ...pendingAssistant,
     displayContent: pendingAssistant.meta?.isGeneratingImage
-      ? 'Sorry, I couldn\'t generate that image.'
-      : 'Sorry — the reply failed before it could be returned.',
+      ? t('chatPage.errors.imageGenerationFailed')
+      : t('chatPage.errors.replyFailedBeforeReturn'),
     meta: {
       ...pendingAssistant.meta,
       statusLabel: message,
@@ -1928,7 +1968,7 @@ function animateAssistantReveal(conversationId, messageId, finalText) {
       meta: {
         ...message.meta,
         isRevealing: index < chunks.length - 1,
-        statusLabel: index < chunks.length - 1 ? 'Rendering final reply…' : 'Reply received from OpenClaw',
+        statusLabel: index < chunks.length - 1 ? t('chatPage.status.renderingFinalReply') : t('chatPage.status.replyReceivedFromOpenClaw'),
       },
     })
 
@@ -1987,7 +2027,9 @@ function messageDisplayText(message) {
   }
 
   if (message.meta?.isPlaceholder) {
-    return message.meta?.isGeneratingImage ? 'Generating image…' : `${AGENT_DISPLAY_NAME.value} is thinking…`
+    return message.meta?.isGeneratingImage
+      ? t('chatPage.typing.generatingImage')
+      : t('chatPage.typing.agentThinkingWithNameEllipsis', { name: AGENT_DISPLAY_NAME.value })
   }
 
   return ''
@@ -2049,13 +2091,13 @@ async function focusComposerInput() {
 
 async function fetchAttachmentAsFile(attachment) {
   if (!attachment?.url) {
-    throw new Error('No image is available to use.')
+    throw new Error(t('chatPage.errors.noImageAvailableToUse'))
   }
 
   const response = await fetch(attachment.url, { credentials: 'include' })
 
   if (!response.ok) {
-    throw new Error('Unable to load the image.')
+    throw new Error(t('chatPage.errors.unableLoadImage'))
   }
 
   const blob = await response.blob()
@@ -2067,7 +2109,7 @@ async function fetchAttachmentAsFile(attachment) {
 
 async function reattachLightboxImageForEdit(attachment) {
   if (!activeConversation.value?.id) {
-    throw new Error('No conversation is active.')
+    throw new Error(t('chatPage.errors.noActiveConversation'))
   }
 
   const file = await fetchAttachmentAsFile(attachment)
@@ -2075,7 +2117,7 @@ async function reattachLightboxImageForEdit(attachment) {
   const uploaded = response?.attachment
 
   if (!uploaded?.token) {
-    throw new Error('Unable to prepare the image for editing.')
+    throw new Error(t('chatPage.errors.unablePrepareImageForEditing'))
   }
 
   const nextAttachment = {
@@ -2115,7 +2157,7 @@ async function handleLightboxEditWithThis() {
     await reattachLightboxImageForEdit(attachment)
     await focusComposerInput()
   } catch (error) {
-    $q.notify({ type: 'negative', message: error.message || 'Unable to reuse this image for editing.' })
+    $q.notify({ type: 'negative', message: error.message || t('chatPage.errors.unableReuseImageForEditing') })
   }
 }
 
@@ -2124,7 +2166,7 @@ async function shareLightboxImage(attachment) {
     return
   }
 
-  const title = attachment.name || 'Image'
+  const title = attachment.name || t('chatPage.share.imageFallbackTitle')
   const url = attachment.url
 
   if (navigator.share) {
@@ -2142,7 +2184,7 @@ async function shareLightboxImage(attachment) {
 
   try {
     await navigator.clipboard.writeText(url)
-    $q.notify({ type: 'positive', message: 'Image link copied to clipboard.' })
+    $q.notify({ type: 'positive', message: t('chatPage.notices.imageLinkCopied') })
   } catch {
     window.open(url, '_blank', 'noopener,noreferrer')
   }
@@ -2158,7 +2200,7 @@ async function handleLightboxShare() {
   try {
     await shareLightboxImage(attachment)
   } catch {
-    $q.notify({ type: 'negative', message: 'Share failed.' })
+    $q.notify({ type: 'negative', message: t('chatPage.errors.shareFailed') })
   }
 }
 
@@ -2185,7 +2227,7 @@ async function saveLightboxImage(attachment) {
       try {
         await navigator.share({
           files: [file],
-          title: attachment.name || 'Image',
+          title: attachment.name || t('chatPage.share.imageFallbackTitle'),
         })
         return
       } catch (err) {
@@ -2218,7 +2260,7 @@ async function handleLightboxSave() {
       return
     }
 
-    $q.notify({ type: 'negative', message: 'Save failed.' })
+    $q.notify({ type: 'negative', message: t('chatPage.errors.saveFailed') })
   }
 }
 
@@ -2495,7 +2537,7 @@ function attachmentIcon(attachment) {
 }
 
 function attachmentExtensionLabel(attachment) {
-  return (attachment.extension || fileExtension(attachment.name || '') || 'file').toUpperCase()
+  return (attachment.extension || fileExtension(attachment.name || '') || t('chatPage.attachments.fileFallbackExtension')).toUpperCase()
 }
 
 function formatAttachmentSize(value) {
@@ -2538,9 +2580,9 @@ async function copyMessage(message) {
 
   try {
     await navigator.clipboard.writeText(text)
-    $q.notify({ type: 'positive', message: 'Message copied.' })
+    $q.notify({ type: 'positive', message: t('chatPage.notices.messageCopied') })
   } catch {
-    $q.notify({ type: 'negative', message: 'Clipboard access failed.' })
+    $q.notify({ type: 'negative', message: t('chatPage.errors.clipboardAccessFailed') })
   }
 }
 
@@ -2579,7 +2621,7 @@ function stopSpeaking() {
 
 function speakWithBrowser(message, text) {
   if (typeof window === 'undefined' || !window.speechSynthesis) {
-    $q.notify({ type: 'warning', message: 'Speech is not supported on this device.' })
+    $q.notify({ type: 'warning', message: t('chatPage.errors.speechUnsupported') })
     return
   }
 
@@ -2622,7 +2664,7 @@ async function speakWithBackend(message, text) {
         speakingMessageId.value = null
       }
       stopRemoteSpeech()
-      $q.notify({ type: 'negative', message: 'Audio playback failed on this device.' })
+      $q.notify({ type: 'negative', message: t('chatPage.errors.audioPlaybackFailed') })
     }
 
     await audio.play()
@@ -2630,7 +2672,7 @@ async function speakWithBackend(message, text) {
     if (speechRequestToken === requestToken) {
       speakingMessageId.value = null
       stopRemoteSpeech()
-      $q.notify({ type: 'negative', message: error.message || 'Unable to generate speech audio.' })
+      $q.notify({ type: 'negative', message: error.message || t('chatPage.errors.unableGenerateSpeechAudio') })
     }
   }
 }
@@ -2690,15 +2732,15 @@ async function shareMessage(message) {
       await navigator.share({ text })
     } catch (err) {
       if (err.name !== 'AbortError') {
-        $q.notify({ type: 'negative', message: 'Share failed.' })
+        $q.notify({ type: 'negative', message: t('chatPage.errors.shareFailed') })
       }
     }
   } else {
     try {
       await navigator.clipboard.writeText(text)
-      $q.notify({ type: 'positive', message: 'Copied to clipboard (share not available).' })
+      $q.notify({ type: 'positive', message: t('chatPage.notices.copiedToClipboardShareUnavailable') })
     } catch {
-      $q.notify({ type: 'negative', message: 'Share not available on this device.' })
+      $q.notify({ type: 'negative', message: t('chatPage.errors.shareUnavailable') })
     }
   }
 }
@@ -2710,7 +2752,7 @@ async function handleChatShare() {
     return
   }
 
-  const title = conversation.title || 'Hearth chat'
+  const title = conversation.title || t('chatPage.share.hearthChatFallbackTitle')
   const url = window.location.href
 
   if (navigator.share) {
@@ -2718,15 +2760,15 @@ async function handleChatShare() {
       await navigator.share({ title, url })
     } catch (err) {
       if (err.name !== 'AbortError') {
-        $q.notify({ type: 'negative', message: 'Share failed.' })
+        $q.notify({ type: 'negative', message: t('chatPage.errors.shareFailed') })
       }
     }
   } else {
     try {
       await navigator.clipboard.writeText(url)
-      $q.notify({ type: 'positive', message: 'Link copied to clipboard.' })
+      $q.notify({ type: 'positive', message: t('chatPage.notices.linkCopied') })
     } catch {
-      $q.notify({ type: 'negative', message: 'Share not available on this device.' })
+      $q.notify({ type: 'negative', message: t('chatPage.errors.shareUnavailable') })
     }
   }
 }
@@ -2754,18 +2796,18 @@ function handleChatDelete() {
   const conversation = activeConversation.value
 
   $q.dialog({
-    title: 'Delete chat',
-    message: `Delete "${conversation.title || 'this chat'}"? This cannot be undone.`,
-    ok: { label: 'Delete', color: 'negative', unelevated: true, noCaps: true },
-    cancel: { label: 'Cancel', flat: true, noCaps: true },
+    title: t('chatPage.deleteDialog.title'),
+    message: t('chatPage.deleteDialog.message', { title: conversation.title || t('chatPage.deleteDialog.thisChat') }),
+    ok: { label: t('common.delete'), color: 'negative', unelevated: true, noCaps: true },
+    cancel: { label: t('common.cancel'), flat: true, noCaps: true },
   }).onOk(async () => {
     try {
       const res = await deleteConversation(conversation.id)
-      if (res && !res.ok && res.status !== 204) throw new Error('Delete failed.')
+      if (res && !res.ok && res.status !== 204) throw new Error(t('chatPage.errors.deleteFailed'))
       removeConversationRecord(conversation.id)
-      $q.notify({ type: 'positive', message: 'Chat deleted.', timeout: 2000 })
+      $q.notify({ type: 'positive', message: t('chatPage.notices.chatDeleted'), timeout: 2000 })
     } catch (err) {
-      $q.notify({ type: 'negative', message: err?.message || 'Could not delete chat.', timeout: 3000 })
+      $q.notify({ type: 'negative', message: err?.message || t('chatPage.errors.couldNotDeleteChat'), timeout: 3000 })
     }
   })
 }
@@ -2775,15 +2817,15 @@ function validateSelectedFile(file) {
   const category = detectAttachmentCategory(file.type, file.name)
 
   if (!acceptedAttachmentExtensions.has(extension)) {
-    throw new Error('This file type is not supported yet.')
+    throw new Error(t('chatPage.errors.fileTypeNotSupported'))
   }
 
   if (!['image', 'pdf', 'text'].includes(category)) {
-    throw new Error('This file type is not supported yet.')
+    throw new Error(t('chatPage.errors.fileTypeNotSupported'))
   }
 
   if ((file.size || 0) > 12 * 1024 * 1024) {
-    throw new Error('Attachments must be 12 MB or smaller.')
+    throw new Error(t('chatPage.errors.attachmentTooLarge'))
   }
 }
 
@@ -4277,6 +4319,15 @@ async function scrollConversationToBottom() {
   align-self: center;
 }
 
+.chat-new-btn {
+  color: var(--hearth-text-muted);
+  flex-shrink: 0;
+  margin-top: 0;
+  margin-left: 0;
+  align-self: center;
+}
+
+.chat-new-btn:hover,
 .chat-menu-btn:hover {
   color: var(--hearth-text);
 }
