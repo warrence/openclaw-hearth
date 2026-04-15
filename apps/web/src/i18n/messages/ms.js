@@ -322,8 +322,10 @@ export default {
     },
     header: {
       archivedChip: 'Diarkib',
+      chatMenuLabel: 'Chat',
       chatOptionsAria: 'Pilihan chat',
       chatTitleFallback: 'Chat',
+      modelMenuLabel: 'Model',
     },
     imageEdit: {
       bannerBody: 'Guna imej sebagai sumber dan terangkan perubahan yang anda mahu.',

@@ -322,8 +322,10 @@ export default {
     },
     header: {
       archivedChip: '已归档',
+      chatMenuLabel: '聊天',
       chatOptionsAria: '聊天选项',
       chatTitleFallback: '聊天',
+      modelMenuLabel: '模型',
     },
     imageEdit: {
       bannerBody: '使用这张图片作为来源，并描述你想要修改的内容。',

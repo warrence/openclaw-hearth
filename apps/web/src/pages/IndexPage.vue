@@ -3,97 +3,117 @@
     <section class="chat-panel">
       <header class="chat-header">
         <div class="chat-toolbar">
-          <q-btn
-            v-if="isMobile"
-            flat
-            round
-            dense
-            icon="menu"
-            :aria-label="t('dashboard.openDrawerAria')"
-            class="mobile-sidebar-toggle"
-            @click="openMobileDrawer"
-          />
-
-          <q-chip v-if="isArchivedConversation" class="archive-chip" square icon="inventory_2">
-            {{ t('chatPage.header.archivedChip') }}
-          </q-chip>
-
-          <div class="chat-title-area">
-            <span v-if="activeConversation" class="chat-title-text">{{ activeConversation.title || t('chatPage.header.chatTitleFallback') }}</span>
+          <div class="chat-toolbar-side chat-toolbar-side--left">
+            <q-btn
+              v-if="isMobile"
+              flat
+              round
+              dense
+              icon="menu"
+              :aria-label="t('dashboard.openDrawerAria')"
+              class="chat-header-circle-btn mobile-sidebar-toggle"
+              @click="openMobileDrawer"
+            />
           </div>
 
-          <div class="chat-toolbar-actions">
-          <q-select
-            v-if="activeConversation"
-            v-model="selectedModelPreset"
-            dense
-            outlined
-            emit-value
-            map-options
-            options-dense
-            behavior="menu"
-            options-dark
-            menu-anchor="bottom end"
-            menu-self="top end"
-            popup-content-class="model-select-menu"
-            dropdown-icon="expand_more"
-            class="model-select chat-header-model-select model-pill-select"
-            :options="modelPresetOptions"
-          />
-
-          <q-btn
-            v-if="currentUser"
-            flat
-            round
-            dense
-            icon="border_color"
-            class="chat-new-btn"
-            :loading="creatingConversation"
-            :aria-label="t('appShell.sidebar.newChatTooltip')"
-            @click="handleCreateConversation"
-          >
-            <q-tooltip>{{ t('appShell.sidebar.newChatTooltip') }}</q-tooltip>
-          </q-btn>
-
-          <q-btn
-            v-if="activeConversation"
-            flat
-            round
-            dense
-            icon="more_horiz"
-            class="chat-menu-btn"
-            :aria-label="t('chatPage.header.chatOptionsAria')"
-          >
-            <q-menu
-              anchor="bottom end"
-              self="top end"
-              class="chat-actions-menu"
+          <div class="chat-header-center">
+            <q-btn
+              v-if="currentUser"
+              flat
+              no-caps
+              class="chat-header-selector"
+              :aria-label="t('chatPage.header.chatOptionsAria')"
             >
-              <q-list style="min-width: 220px;">
-                <q-item clickable v-close-popup @click="handleChatShare">
-                  <q-item-section avatar><q-icon name="share" /></q-item-section>
-                  <q-item-section>{{ t('chatPage.actions.share') }}</q-item-section>
-                </q-item>
-                <q-item clickable v-close-popup @click="promptRenameConversation(activeConversation)">
-                  <q-item-section avatar><q-icon name="edit" /></q-item-section>
-                  <q-item-section>{{ t('chatPage.actions.rename') }}</q-item-section>
-                </q-item>
-                <q-item clickable v-close-popup @click="openViewFilesDialog">
-                  <q-item-section avatar><q-icon name="attach_file" /></q-item-section>
-                  <q-item-section>{{ t('chatPage.actions.viewFiles') }}</q-item-section>
-                </q-item>
-                <q-item v-if="!isArchivedConversation" clickable v-close-popup @click="promptArchiveConversation(activeConversation)">
-                  <q-item-section avatar><q-icon name="archive" /></q-item-section>
-                  <q-item-section>{{ t('common.archive') }}</q-item-section>
-                </q-item>
-                <q-separator />
-                <q-item clickable v-close-popup class="text-negative" @click="handleChatDelete">
-                  <q-item-section avatar><q-icon name="delete_outline" color="red-4" /></q-item-section>
-                  <q-item-section>{{ t('common.delete') }}</q-item-section>
-                </q-item>
-              </q-list>
-            </q-menu>
-          </q-btn>
+              <div class="chat-header-selector__content">
+                <div class="chat-header-selector__primary">
+                  <span>{{ currentModelPresetLabel }}</span>
+                  <q-icon name="expand_more" size="18px" />
+                </div>
+                <div class="chat-header-selector__secondary">
+                  {{ headerConversationTitle }}
+                </div>
+              </div>
+
+              <q-menu
+                anchor="bottom middle"
+                self="top middle"
+                class="model-select-menu"
+              >
+                <q-list style="min-width: 240px;">
+                  <q-item-label header class="chat-header-menu__label">{{ t('chatPage.header.modelMenuLabel') }}</q-item-label>
+                  <q-item
+                    v-for="option in modelPresetOptions"
+                    :key="option.value"
+                    clickable
+                    v-close-popup
+                    :active="selectedModelPreset === option.value"
+                    active-class="q-item--active"
+                    @click="selectedModelPreset = option.value"
+                  >
+                    <q-item-section avatar>
+                      <q-icon :name="selectedModelPreset === option.value ? 'radio_button_checked' : 'radio_button_unchecked'" />
+                    </q-item-section>
+                    <q-item-section>{{ option.label }}</q-item-section>
+                  </q-item>
+
+                  <template v-if="activeConversation">
+                    <q-separator />
+                    <q-item-label header class="chat-header-menu__label">{{ t('chatPage.header.chatMenuLabel') }}</q-item-label>
+                    <q-item clickable v-close-popup @click="handleChatShare">
+                      <q-item-section avatar><q-icon name="share" /></q-item-section>
+                      <q-item-section>{{ t('chatPage.actions.share') }}</q-item-section>
+                    </q-item>
+                    <q-item clickable v-close-popup @click="promptRenameConversation(activeConversation)">
+                      <q-item-section avatar><q-icon name="edit" /></q-item-section>
+                      <q-item-section>{{ t('chatPage.actions.rename') }}</q-item-section>
+                    </q-item>
+                    <q-item clickable v-close-popup @click="openViewFilesDialog">
+                      <q-item-section avatar><q-icon name="attach_file" /></q-item-section>
+                      <q-item-section>{{ t('chatPage.actions.viewFiles') }}</q-item-section>
+                    </q-item>
+                    <q-item
+                      v-if="isArchivedConversation"
+                      clickable
+                      v-close-popup
+                      @click="handleRestoreConversation(activeConversation)"
+                    >
+                      <q-item-section avatar><q-icon name="unarchive" /></q-item-section>
+                      <q-item-section>{{ t('chatPage.actions.restore') }}</q-item-section>
+                    </q-item>
+                    <q-item
+                      v-else
+                      clickable
+                      v-close-popup
+                      @click="promptArchiveConversation(activeConversation)"
+                    >
+                      <q-item-section avatar><q-icon name="archive" /></q-item-section>
+                      <q-item-section>{{ t('common.archive') }}</q-item-section>
+                    </q-item>
+                    <q-separator />
+                    <q-item clickable v-close-popup class="text-negative" @click="handleChatDelete">
+                      <q-item-section avatar><q-icon name="delete_outline" color="red-4" /></q-item-section>
+                      <q-item-section>{{ t('common.delete') }}</q-item-section>
+                    </q-item>
+                  </template>
+                </q-list>
+              </q-menu>
+            </q-btn>
+          </div>
+
+          <div class="chat-toolbar-side chat-toolbar-side--right">
+            <q-btn
+              v-if="currentUser"
+              flat
+              round
+              dense
+              icon="add_comment"
+              class="chat-header-circle-btn chat-new-btn"
+              :loading="creatingConversation"
+              :aria-label="t('appShell.sidebar.newChatTooltip')"
+              @click="handleCreateConversation"
+            >
+              <q-tooltip>{{ t('appShell.sidebar.newChatTooltip') }}</q-tooltip>
+            </q-btn>
           </div>
         </div>
       </header>
@@ -621,6 +641,11 @@ const modelPresetOptions = computed(() => ([
   { label: t('chatPage.modelPreset.fast'), value: 'fast' },
   { label: t('chatPage.modelPreset.deep'), value: 'deep' },
 ]))
+const currentModelPresetLabel = computed(() => (
+  modelPresetOptions.value.find((option) => option.value === selectedModelPreset.value)?.label
+  || modelPresetOptions.value[0]?.label
+  || 'Fast'
+))
 const appVersionLabel = process.env.VITE_APP_VERSION || '0.0.48'
 const { agentDisplayName } = useAppShell()
 const AGENT_DISPLAY_NAME = computed(() => agentDisplayName?.value || t('chatPage.agentFallback'))
@@ -628,6 +653,9 @@ const sendingStatusLabel = computed(() => t('chatPage.status.sending'))
 const queuedForOpenClawStatusLabel = computed(() => t('chatPage.status.queuedForOpenClaw'))
 const defaultConversationTitle = computed(() => t('appShell.createConversationTitle'))
 const LEGACY_DEFAULT_CONVERSATION_TITLE = 'New Chat'
+const headerConversationTitle = computed(() => (
+  activeConversation.value?.title || t('chatPage.header.chatTitleFallback')
+))
 
 const imageEditQuickPrompts = computed(() => ([
   {
@@ -3049,9 +3077,8 @@ async function scrollConversationToBottom() {
   top: 0;
   z-index: 8;
   display: flex;
-  align-items: center;
   flex-shrink: 0;
-  height: 52px;
+  min-height: 72px;
   padding: 0 16px;
   background: var(--hearth-surface);
   backdrop-filter: blur(14px);
@@ -3062,52 +3089,59 @@ async function scrollConversationToBottom() {
 .chat-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
   width: 100%;
   min-width: 0;
-  flex-wrap: nowrap;
+  gap: 12px;
 }
 
-.chat-title-area {
-  flex: 1 1 0;
-  min-width: 0;
+.chat-toolbar-side {
+  flex: 0 0 52px;
   display: flex;
   align-items: center;
-  overflow: hidden;
+  justify-content: center;
 }
 
-.chat-title-text {
-  font-size: 0.94rem;
-  font-weight: 600;
+.chat-header-center {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.chat-header-selector {
+  min-width: 0;
+  max-width: min(280px, 100%);
+  padding: 6px 12px;
+  border-radius: 18px;
+}
+
+.chat-header-selector__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.chat-header-selector__primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
   color: var(--hearth-text);
+  font-size: 0.98rem;
+  font-weight: 650;
+}
+
+.chat-header-selector__secondary {
+  min-width: 0;
+  color: var(--hearth-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 1.3;
-}
-
-.chat-toolbar-actions {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 0 0 auto;
-}
-
-.chat-header-main {
-  flex: 1 1 0;
-  min-width: 0;
-}
-
-.chat-header-topline {
-  min-width: 0;
-}
-
-.chat-header-topline {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  width: 100%;
 }
 
 .empty-state__eyebrow {
@@ -3131,75 +3165,6 @@ async function scrollConversationToBottom() {
   color: var(--hearth-text-muted);
 }
 
-.chat-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.archive-chip {
-  background: var(--hearth-surface-elevated);
-  color: var(--hearth-text);
-  border: 1px solid var(--hearth-border);
-}
-
-.model-select {
-  min-width: 88px;
-  max-width: 116px;
-  flex-shrink: 0;
-}
-
-.chat-header-model-select {
-  flex: 0 1 auto;
-  min-width: 88px;
-  max-width: 116px;
-}
-
-.model-pill-select :deep(.q-field) {
-  min-width: 0;
-}
-
-.model-pill-select :deep(.q-field__control) {
-  min-height: 32px;
-  height: 32px;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: var(--hearth-surface-elevated);
-  border: 1px solid var(--hearth-border);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
-}
-
-.model-pill-select :deep(.q-field__native),
-.model-pill-select :deep(.q-field__input) {
-  color: var(--hearth-text);
-  font-size: 0.77rem;
-  font-weight: 650;
-  padding: 0;
-  min-height: 20px;
-}
-
-.model-pill-select :deep(.q-field__append) {
-  padding: 0 0 0 4px;
-  min-height: 20px;
-}
-
-.model-pill-select :deep(.q-field__append .q-icon) {
-  font-size: 15px;
-  color: var(--hearth-text-muted);
-}
-
-.model-pill-select :deep(.q-field__marginal) {
-  height: auto;
-}
-
-.model-pill-select :deep(.q-field__bottom),
-.model-pill-select :deep(.q-field__messages),
-.model-pill-select :deep(.q-field__counter) {
-  display: none;
-}
-
 .model-select-menu {
   background: var(--hearth-surface-elevated);
   color: var(--hearth-text);
@@ -3219,6 +3184,29 @@ async function scrollConversationToBottom() {
 
 .model-select-menu .q-item.q-item--active {
   background: rgba(109, 93, 252, 0.18);
+  color: var(--hearth-text);
+}
+
+.chat-header-menu__label {
+  color: var(--hearth-text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.chat-header-circle-btn {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  border-radius: 999px;
+  color: var(--hearth-text-muted);
+  background: color-mix(in srgb, var(--hearth-surface-elevated) 88%, transparent) !important;
+  border: 1px solid var(--hearth-border);
+}
+
+.chat-header-circle-btn:hover {
   color: var(--hearth-text);
 }
 

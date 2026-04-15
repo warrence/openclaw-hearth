@@ -322,8 +322,10 @@ export default {
     },
     header: {
       archivedChip: 'Archived',
+      chatMenuLabel: 'Chat',
       chatOptionsAria: 'Chat options',
       chatTitleFallback: 'Chat',
+      modelMenuLabel: 'Model',
     },
     imageEdit: {
       bannerBody: 'Use the image as source and describe what you want changed.',
