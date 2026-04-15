@@ -46,7 +46,7 @@
             flat
             round
             dense
-            icon="edit_square"
+            icon="edit"
             class="chat-new-btn"
             :loading="creatingConversation"
             :aria-label="t('appShell.sidebar.newChatTooltip')"
