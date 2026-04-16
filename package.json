@@ -1,6 +1,6 @@
 {
   "name": "openclaw-hearth",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A self-hosted, multi-user household AI assistant built on OpenClaw",
   "private": true,
   "bin": {
