@@ -8,25 +8,25 @@
           round
           dense
           icon="menu"
-          aria-label="Open app drawer"
+          :aria-label="t('dashboard.openDrawerAria')"
           class="dashboard-menu-btn"
           @click="openMobileDrawer"
         />
         <div>
-          <div class="hero-eyebrow">Gateway dashboard</div>
-          <div class="dashboard-topbar__title">Same shell, lighter control pass.</div>
+          <div class="hero-eyebrow">{{ t('dashboard.eyebrow') }}</div>
+          <div class="dashboard-topbar__title">{{ t('dashboard.topbarTitle') }}</div>
         </div>
       </div>
-      <q-btn color="primary" unelevated no-caps rounded icon="refresh" label="Refresh" :loading="loading" @click="loadGatewayStatus" />
+      <q-btn color="primary" unelevated no-caps rounded icon="refresh" :label="t('dashboard.refreshButton')" :loading="loading" @click="loadGatewayStatus" />
     </div>
 
     <div class="dashboard-hero">
-      <div class="hero-title">Control surface, not the main event.</div>
-      <div class="hero-subtitle">Chat stays primary. This view keeps gateway health and MVP agent context easy to glance at without breaking the same dark app-shell flow.</div>
+      <div class="hero-title">{{ t('dashboard.heroTitle') }}</div>
+      <div class="hero-subtitle">{{ t('dashboard.heroSubtitle') }}</div>
 
       <div class="dashboard-hero__chips q-mt-md">
-        <q-chip class="dashboard-chip" square icon="person">{{ activeProfile?.name || 'No profile selected' }}</q-chip>
-        <q-chip class="dashboard-chip" square icon="forum">{{ activeConversation?.title || 'No chat selected' }}</q-chip>
+        <q-chip class="dashboard-chip" square icon="person">{{ activeProfile?.name || t('dashboard.noProfileSelected') }}</q-chip>
+        <q-chip class="dashboard-chip" square icon="forum">{{ activeConversation?.title || t('dashboard.noChatSelected') }}</q-chip>
       </div>
     </div>
 
@@ -43,10 +43,12 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useQuasar } from 'quasar'
+import { useI18n } from 'vue-i18n'
 import { getGatewayStatus } from 'src/lib/api'
 import { useAppShell } from 'src/lib/appShell'
 
 const $q = useQuasar()
+const { t } = useI18n({ useScope: 'global' })
 const { isMobile, openMobileDrawer, activeProfile, activeConversation, activeConversations } = useAppShell()
 const loading = ref(false)
 
@@ -62,14 +64,16 @@ const gateway = ref({
 
 const cards = computed(() => [
   {
-    title: 'Gateway',
+    title: t('dashboard.cards.gateway'),
     value: gateway.value.status,
     caption: gateway.value.base_url,
   },
   {
-    title: 'Active chats',
+    title: t('dashboard.cards.activeChats'),
     value: activeConversations.value.length,
-    caption: activeProfile.value ? `Inside ${activeProfile.value.name}'s workspace.` : 'Pick a profile from the shared drawer.',
+    caption: activeProfile.value
+      ? t('dashboard.cards.activeChatsWithProfile', { name: activeProfile.value.name })
+      : t('dashboard.cards.activeChatsNoProfile'),
   },
 ])
 

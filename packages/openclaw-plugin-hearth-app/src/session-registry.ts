@@ -16,16 +16,31 @@ type SessionEntry = {
 
 const registry = new Map<string, SessionEntry>();
 
-export function registerSession(sessionKey: string, callbackUrl: string, conversationId: number): void {
-  registry.set(sessionKey.toLowerCase(), {
+function normalizeKeys(sessionKeys: string | string[]): string[] {
+  const values = Array.isArray(sessionKeys) ? sessionKeys : [sessionKeys];
+  return [...new Set(values.map((key) => key.trim().toLowerCase()).filter(Boolean))];
+}
+
+export function registerSession(
+  sessionKeys: string | string[],
+  callbackUrl: string,
+  conversationId: number,
+): void {
+  const entry: SessionEntry = {
     callbackUrl,
     conversationId,
     expiresAt: Date.now() + TTL_MS,
-  });
+  };
+
+  for (const key of normalizeKeys(sessionKeys)) {
+    registry.set(key, entry);
+  }
 }
 
-export function unregisterSession(sessionKey: string): void {
-  registry.delete(sessionKey.toLowerCase());
+export function unregisterSession(sessionKeys: string | string[]): void {
+  for (const key of normalizeKeys(sessionKeys)) {
+    registry.delete(key);
+  }
 }
 
 export function getSessionEntry(sessionKey: string): SessionEntry | undefined {

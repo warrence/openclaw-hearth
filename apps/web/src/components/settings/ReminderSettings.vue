@@ -2,8 +2,8 @@
   <div class="tts-card q-mt-md">
     <div class="tts-card__header tts-card__header--clickable" @click="expanded = !expanded">
       <div>
-        <div class="dashboard-card__label">Reminders</div>
-        <div class="tts-card__title">Critical reminder settings</div>
+        <div class="dashboard-card__label">{{ t('reminders.sectionLabel') }}</div>
+        <div class="tts-card__title">{{ t('reminders.sectionTitle') }}</div>
       </div>
       <q-icon :name="expanded ? 'expand_less' : 'expand_more'" size="24px" />
     </div>
@@ -17,17 +17,17 @@
         <div class="tts-card__section">
           <q-toggle
             v-model="form.enabled"
-            label="Enable critical reminders"
+            :label="t('reminders.enableCritical')"
             dark
             color="primary"
           />
           <div class="text-caption text-grey-6 q-mt-xs">
-            Critical reminders repeat until the user responds to the chat.
+            {{ t('reminders.criticalHelp') }}
           </div>
         </div>
 
         <div v-if="form.enabled" class="tts-card__section q-mt-md">
-          <div class="tts-card__section-label">Repeat interval (minutes)</div>
+          <div class="tts-card__section-label">{{ t('reminders.repeatInterval') }}</div>
           <q-input
             v-model.number="form.intervalMinutes"
             type="number"
@@ -36,12 +36,12 @@
             dark
             :min="1"
             :max="30"
-            hint="How often to re-send the reminder (1-30 minutes)"
+            :hint="t('reminders.repeatHint')"
           />
         </div>
 
         <div v-if="form.enabled" class="tts-card__section q-mt-md">
-          <div class="tts-card__section-label">Max repeats</div>
+          <div class="tts-card__section-label">{{ t('reminders.maxRepeats') }}</div>
           <q-input
             v-model.number="form.maxRepeats"
             type="number"
@@ -50,7 +50,7 @@
             dark
             :min="1"
             :max="100"
-            hint="Stop after this many repeats even if not acknowledged"
+            :hint="t('reminders.maxRepeatsHint')"
           />
         </div>
 
@@ -61,7 +61,7 @@
             no-caps
             rounded
             icon="save"
-            label="Save"
+            :label="t('reminders.saveButton')"
             size="sm"
             :loading="saving"
             @click="save"
@@ -75,8 +75,10 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useQuasar } from 'quasar'
+import { useI18n } from 'vue-i18n'
 
 const $q = useQuasar()
+const { t } = useI18n({ useScope: 'global' })
 const expanded = ref(false)
 const loading = ref(false)
 const saving = ref(false)
@@ -115,10 +117,10 @@ async function save() {
       body: JSON.stringify({ critical: form.value }),
     })
     if (res.ok) {
-      $q.notify({ type: 'positive', message: 'Reminder settings saved.' })
+      $q.notify({ type: 'positive', message: t('reminders.savedNotice') })
     }
   } catch {
-    $q.notify({ type: 'negative', message: 'Failed to save.' })
+    $q.notify({ type: 'negative', message: t('reminders.saveFailed') })
   } finally { saving.value = false }
 }
 

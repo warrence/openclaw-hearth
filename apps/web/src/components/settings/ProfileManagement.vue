@@ -3,8 +3,8 @@
     <div class="profiles-card q-mt-md">
       <div class="profiles-card__header tts-card__header--clickable" @click="profilesExpanded = !profilesExpanded">
         <div>
-          <div class="dashboard-card__label">Profile management</div>
-          <div class="profiles-card__title">Profiles</div>
+          <div class="dashboard-card__label">{{ t('profiles.sectionLabel') }}</div>
+          <div class="profiles-card__title">{{ t('profiles.sectionTitle') }}</div>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
           <q-btn
@@ -13,7 +13,7 @@
             no-caps
             rounded
             icon="person_add"
-            label="Add profile"
+            :label="t('profiles.addProfileButton')"
             size="sm"
             @click.stop="openAddDialog"
           />
@@ -27,7 +27,7 @@
         </div>
 
         <div v-else-if="allProfiles.length === 0" class="dashboard-card__caption q-mt-md">
-          No profiles found.
+          {{ t('profiles.noneFound') }}
         </div>
 
         <div v-else class="profiles-list q-mt-md">
@@ -45,7 +45,7 @@
                   size="xs"
                   :class="profile.role === 'owner' ? 'badge-owner' : 'badge-member'"
                 >
-                  {{ profile.role }}
+                  {{ profile.role === 'owner' ? t('profiles.roleOwner') : t('profiles.roleMember') }}
                 </q-chip>
                 <q-chip
                   dense
@@ -53,7 +53,7 @@
                   size="xs"
                   :class="profile.is_active ? 'badge-active' : 'badge-inactive'"
                 >
-                  {{ profile.is_active ? 'active' : 'inactive' }}
+                  {{ profile.is_active ? t('common.active') : t('common.inactive') }}
                 </q-chip>
                 <q-chip
                   dense
@@ -62,17 +62,17 @@
                   class="badge-pin"
                   :icon="profile.has_pin ? 'lock' : 'lock_open'"
                 >
-                  {{ profile.has_pin ? 'PIN set' : 'no PIN' }}
+                  {{ profile.has_pin ? t('profiles.pinSet') : t('profiles.noPin') }}
                 </q-chip>
               </div>
             </div>
 
             <div class="profile-row__actions">
               <q-btn flat round dense icon="edit" size="sm" @click="openEditDialog(profile)">
-                <q-tooltip>Edit profile</q-tooltip>
+                <q-tooltip>{{ t('profiles.editProfileTooltip') }}</q-tooltip>
               </q-btn>
               <q-btn flat round dense icon="pin" size="sm" @click="openSetPinDialog(profile)">
-                <q-tooltip>Set PIN</q-tooltip>
+                <q-tooltip>{{ t('profiles.setPinTooltip') }}</q-tooltip>
               </q-btn>
               <q-btn
                 v-if="profile.has_pin"
@@ -84,7 +84,7 @@
                 color="warning"
                 @click="promptResetPin(profile)"
               >
-                <q-tooltip>Clear PIN</q-tooltip>
+                <q-tooltip>{{ t('profiles.clearPinTooltip') }}</q-tooltip>
               </q-btn>
               <q-btn
                 flat
@@ -95,7 +95,7 @@
                 color="negative"
                 @click="promptDeleteProfile(profile)"
               >
-                <q-tooltip>Delete profile</q-tooltip>
+                <q-tooltip>{{ t('profiles.deleteProfileTooltip') }}</q-tooltip>
               </q-btn>
             </div>
           </div>
@@ -107,13 +107,13 @@
     <q-dialog v-model="profileDialog.open" persistent>
       <q-card class="dialog-card">
         <q-card-section class="dialog-card__header">
-          <div class="dialog-card__title">{{ profileDialog.isEdit ? 'Edit profile' : 'Add profile' }}</div>
+          <div class="dialog-card__title">{{ profileDialog.isEdit ? t('profiles.dialogs.editProfileTitle') : t('profiles.dialogs.addProfileTitle') }}</div>
         </q-card-section>
 
         <q-card-section class="q-pt-none">
           <q-input
             v-model="profileDialog.name"
-            label="Name"
+            :label="t('profiles.dialogs.nameField')"
             dense
             dark
             outlined
@@ -129,7 +129,7 @@
             option-label="label"
             emit-value
             map-options
-            label="Role"
+            :label="t('profiles.dialogs.roleField')"
             dense
             dark
             outlined
@@ -138,18 +138,18 @@
 
           <q-toggle
             v-model="profileDialog.isActive"
-            label="Active"
+            :label="t('profiles.dialogs.activeField')"
             color="primary"
           />
         </q-card-section>
 
         <q-card-actions align="right">
-          <q-btn flat no-caps label="Cancel" color="grey-5" v-close-popup />
+          <q-btn flat no-caps :label="t('common.cancel')" color="grey-5" v-close-popup />
           <q-btn
             unelevated
             no-caps
             rounded
-            :label="profileDialog.isEdit ? 'Save' : 'Create'"
+            :label="profileDialog.isEdit ? t('common.save') : t('common.create')"
             color="primary"
             :loading="profileDialog.loading"
             @click="submitProfileDialog"
@@ -162,14 +162,14 @@
     <q-dialog v-model="pinDialog.open" persistent>
       <q-card class="dialog-card">
         <q-card-section class="dialog-card__header">
-          <div class="dialog-card__title">Set PIN — {{ pinDialog.profile?.name }}</div>
-          <div class="dialog-card__subtitle">Enter a PIN of 4–20 characters. It will be hashed and stored securely.</div>
+          <div class="dialog-card__title">{{ t('profiles.dialogs.setPinTitle', { name: pinDialog.profile?.name }) }}</div>
+          <div class="dialog-card__subtitle">{{ t('profiles.dialogs.setPinSubtitle') }}</div>
         </q-card-section>
 
         <q-card-section class="q-pt-none">
           <q-input
             v-model="pinDialog.pin"
-            label="New PIN"
+            :label="t('profiles.dialogs.newPinField')"
             type="password"
             inputmode="numeric"
             dense
@@ -182,12 +182,12 @@
         </q-card-section>
 
         <q-card-actions align="right">
-          <q-btn flat no-caps label="Cancel" color="grey-5" v-close-popup />
+          <q-btn flat no-caps :label="t('common.cancel')" color="grey-5" v-close-popup />
           <q-btn
             unelevated
             no-caps
             rounded
-            label="Set PIN"
+            :label="t('profiles.dialogs.setPinButton')"
             color="primary"
             :loading="pinDialog.loading"
             @click="submitSetPin"
@@ -200,18 +200,18 @@
     <q-dialog v-model="deleteProfileDialog.open" persistent>
       <q-card class="dialog-card">
         <q-card-section class="dialog-card__header">
-          <div class="dialog-card__title">Delete {{ deleteProfileDialog.profile?.name }}?</div>
+          <div class="dialog-card__title">{{ t('profiles.dialogs.deleteTitle', { name: deleteProfileDialog.profile?.name }) }}</div>
           <div class="dialog-card__subtitle">
-            This will permanently delete this profile and <strong>all their chat history</strong>. This cannot be undone.
+            {{ t('profiles.dialogs.deleteSubtitle') }}
           </div>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat no-caps label="Cancel" color="grey-5" v-close-popup />
+          <q-btn flat no-caps :label="t('common.cancel')" color="grey-5" v-close-popup />
           <q-btn
             unelevated
             no-caps
             rounded
-            label="Delete"
+            :label="t('profiles.dialogs.deleteButton')"
             color="negative"
             :loading="deleteProfileDialog.loading"
             @click="submitDeleteProfile"
@@ -224,17 +224,17 @@
     <q-dialog v-model="resetPinDialog.open">
       <q-card class="dialog-card">
         <q-card-section class="dialog-card__header">
-          <div class="dialog-card__title">Clear PIN — {{ resetPinDialog.profile?.name }}</div>
-          <div class="dialog-card__subtitle">This will remove their PIN. They will not be able to log in until a new PIN is set.</div>
+          <div class="dialog-card__title">{{ t('profiles.dialogs.clearPinTitle', { name: resetPinDialog.profile?.name }) }}</div>
+          <div class="dialog-card__subtitle">{{ t('profiles.dialogs.clearPinSubtitle') }}</div>
         </q-card-section>
 
         <q-card-actions align="right">
-          <q-btn flat no-caps label="Cancel" color="grey-5" v-close-popup />
+          <q-btn flat no-caps :label="t('common.cancel')" color="grey-5" v-close-popup />
           <q-btn
             unelevated
             no-caps
             rounded
-            label="Clear PIN"
+            :label="t('profiles.dialogs.clearPinButton')"
             color="warning"
             :loading="resetPinDialog.loading"
             @click="submitResetPin"
@@ -246,8 +246,9 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useQuasar } from 'quasar'
+import { useI18n } from 'vue-i18n'
 import {
   createProfile,
   deleteProfile,
@@ -258,14 +259,15 @@ import {
 } from 'src/lib/api'
 
 const $q = useQuasar()
+const { t } = useI18n({ useScope: 'global' })
 const profilesExpanded = ref(false)
 const profilesLoading = ref(false)
 const allProfiles = ref([])
 
-const roleOptions = [
-  { label: 'Member', value: 'member' },
-  { label: 'Owner', value: 'owner' },
-]
+const roleOptions = computed(() => ([
+  { label: t('profiles.roleOptions.member'), value: 'member' },
+  { label: t('profiles.roleOptions.owner'), value: 'owner' },
+]))
 
 const profileDialog = ref({
   open: false,
@@ -363,7 +365,7 @@ async function submitProfileDialog() {
 
     profileDialog.value.open = false
     await loadProfiles()
-    $q.notify({ type: 'positive', message: isEdit ? 'Profile updated.' : 'Profile created.' })
+    $q.notify({ type: 'positive', message: isEdit ? t('profiles.notifications.profileUpdated') : t('profiles.notifications.profileCreated') })
   } catch (error) {
     $q.notify({ type: 'negative', message: error.message })
   } finally {
@@ -393,7 +395,7 @@ async function submitSetPin() {
     await setProfilePin(pinDialog.value.profile.id, pinDialog.value.pin)
     pinDialog.value.open = false
     await loadProfiles()
-    $q.notify({ type: 'positive', message: `PIN set for ${profileName}.` })
+    $q.notify({ type: 'positive', message: t('profiles.notifications.pinSetFor', { name: profileName }) })
   } catch (error) {
     pinDialog.value.error = error.message
   } finally {
@@ -416,7 +418,7 @@ async function submitResetPin() {
     await resetProfilePin(resetPinDialog.value.profile.id)
     resetPinDialog.value.open = false
     await loadProfiles()
-    $q.notify({ type: 'positive', message: `PIN cleared for ${profileName}.` })
+    $q.notify({ type: 'positive', message: t('profiles.notifications.pinClearedFor', { name: profileName }) })
   } catch (error) {
     $q.notify({ type: 'negative', message: error.message })
   } finally {
@@ -439,7 +441,7 @@ async function submitDeleteProfile() {
     await deleteProfile(deleteProfileDialog.value.profile.id)
     deleteProfileDialog.value.open = false
     await loadProfiles()
-    $q.notify({ type: 'positive', message: `${profileName} and all their data deleted.` })
+    $q.notify({ type: 'positive', message: t('profiles.notifications.profileDeletedWithData', { name: profileName }) })
   } catch (error) {
     $q.notify({ type: 'negative', message: error.message })
     deleteProfileDialog.value.loading = false
