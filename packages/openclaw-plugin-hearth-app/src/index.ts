@@ -3,7 +3,7 @@ import { hearthAppChannel } from "./channel.js";
 import { createInboundHandler, dispatchStopCommand } from "./inbound.js";
 import { resolveHearthConfig } from "./config.js";
 import { getChannelRuntime } from "./gateway.js";
-import { getSessionEntry, pruneExpired } from "./session-registry.js";
+import { getOnlyActiveSessionEntry, getSessionEntry, pruneExpired } from "./session-registry.js";
 import { postToolStatusToCallback } from "./outbound.js";
 
 
@@ -131,8 +131,12 @@ export default defineChannelPluginEntry({
     // Register before_tool_call hook to stream tool status to Hearth frontend
     api.on("before_tool_call", async (event, ctx) => {
       const sessionKey = ctx.sessionKey;
-      if (!sessionKey) return;
-      const entry = getSessionEntry(sessionKey);
+      const entry = sessionKey
+        ? getSessionEntry(sessionKey)
+        : getOnlyActiveSessionEntry();
+      api.logger.info?.(
+        `[hearth-app] before_tool_call tool=${event.toolName} sessionKey=${sessionKey ?? ""} matchedConversation=${entry?.conversationId ?? ""}`,
+      );
       if (!entry) return;
       await postToolStatusToCallback(
         entry.callbackUrl,

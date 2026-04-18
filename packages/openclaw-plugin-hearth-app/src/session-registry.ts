@@ -53,6 +53,23 @@ export function getSessionEntry(sessionKey: string): SessionEntry | undefined {
   return entry;
 }
 
+export function getOnlyActiveSessionEntry(): SessionEntry | undefined {
+  const now = Date.now();
+  const unique = new Map<string, SessionEntry>();
+
+  for (const [key, entry] of registry.entries()) {
+    if (now > entry.expiresAt) {
+      registry.delete(key);
+      continue;
+    }
+
+    unique.set(`${entry.conversationId}|${entry.callbackUrl}`, entry);
+    if (unique.size > 1) return undefined;
+  }
+
+  return unique.values().next().value;
+}
+
 /** Prune expired entries — call periodically to avoid memory leaks. */
 export function pruneExpired(): void {
   const now = Date.now();

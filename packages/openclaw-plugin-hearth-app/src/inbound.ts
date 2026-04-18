@@ -5,11 +5,10 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { homedir } from "node:os";
 import { join, extname } from "node:path";
 import { randomUUID } from "node:crypto";
-import { dispatchInboundDirectDmWithRuntime } from "openclaw/plugin-sdk/channel-inbound";
 import { resolveInboundRouteEnvelopeBuilderWithRuntime } from "openclaw/plugin-sdk/googlechat";
 import { dispatchInboundReplyWithBase } from "openclaw/plugin-sdk/irc";
 import type { OpenClawConfig, PluginRuntime } from "openclaw/plugin-sdk/core";
-import { buildHearthSessionKey } from "./session-key.js";
+import { buildHearthPeerId, buildHearthSessionKey } from "./session-key.js";
 import { deliverToCallbackUrl, deliverErrorToCallbackUrl, postDeltaToCallbackUrl } from "./outbound.js";
 import { registerSession, unregisterSession } from "./session-registry.js";
 import type { HearthAppInboundEvent, HearthAttachment, HearthAppResolvedAccount } from "./types.js";
@@ -46,6 +45,68 @@ async function readJsonBody(req: IncomingMessage): Promise<unknown> {
   });
 }
 
+function resolveHearthRoute(params: {
+  cfg: OpenClawConfig;
+  channelRuntime: PluginRuntime["channel"];
+  profileSlug: string;
+  conversationUuid: string;
+}) {
+  const peer = {
+    kind: "direct" as const,
+    id: buildHearthPeerId({
+      profileSlug: params.profileSlug,
+      conversationUuid: params.conversationUuid,
+    }),
+  };
+
+  const { route: resolvedRoute } = resolveInboundRouteEnvelopeBuilderWithRuntime({
+    cfg: params.cfg,
+    channel: "hearth-app",
+    accountId: "default",
+    peer,
+    runtime: params.channelRuntime as Parameters<typeof resolveInboundRouteEnvelopeBuilderWithRuntime>[0]["runtime"],
+    sessionStore: params.cfg.session?.store,
+  });
+
+  const sessionKey = buildHearthSessionKey({
+    agentId: resolvedRoute.agentId,
+    profileSlug: params.profileSlug,
+    conversationUuid: params.conversationUuid,
+  });
+
+  const route = resolvedRoute.sessionKey === sessionKey
+    ? resolvedRoute
+    : { ...resolvedRoute, sessionKey, lastRoutePolicy: "session" as const };
+
+  const buildEnvelope = (input: {
+    channel: string;
+    from: string;
+    body: string;
+    timestamp: number;
+  }) => {
+    const storePath = params.channelRuntime.session.resolveStorePath(
+      params.cfg.session?.store,
+      { agentId: route.agentId },
+    );
+    const previousTimestamp = params.channelRuntime.session.readSessionUpdatedAt({
+      storePath,
+      sessionKey: route.sessionKey,
+    });
+    const body = params.channelRuntime.reply.formatAgentEnvelope({
+      channel: input.channel,
+      from: input.from,
+      timestamp: input.timestamp,
+      previousTimestamp,
+      envelope: params.channelRuntime.reply.resolveEnvelopeFormatOptions(params.cfg),
+      body: input.body,
+    });
+
+    return { storePath, body };
+  };
+
+  return { route, buildEnvelope };
+}
+
 /**
  * Dispatch a /stop command to an active OpenClaw session via the channel pipeline.
  * This sets the abortCutoff on the session entry, halting the active agent run.
@@ -58,30 +119,57 @@ export async function dispatchStopCommand(params: {
   conversationUuid: string;
   messageId?: string;
 }): Promise<void> {
-  const { cfg, channelRuntime, agentId, profileSlug, conversationUuid, messageId } = params;
-  const sessionKey = buildHearthSessionKey({ agentId, profileSlug, conversationUuid });
-
-  await dispatchInboundDirectDmWithRuntime({
+  const { cfg, channelRuntime, profileSlug, conversationUuid, messageId } = params;
+  const { route, buildEnvelope } = resolveHearthRoute({
     cfg,
-    runtime: { channel: channelRuntime } as Parameters<typeof dispatchInboundDirectDmWithRuntime>[0]["runtime"],
+    channelRuntime,
+    profileSlug,
+    conversationUuid,
+  });
+  const timestamp = Date.now();
+  const messageSid = messageId ?? `stop-${timestamp}`;
+  const { storePath, body } = buildEnvelope({
+    channel: "Hearth App",
+    from: `Hearth / ${profileSlug}`,
+    body: "/stop",
+    timestamp,
+  });
+
+  const ctxPayload = channelRuntime.reply.finalizeInboundContext({
+    Body: body,
+    BodyForAgent: "/stop",
+    RawBody: "/stop",
+    CommandBody: "/stop",
+    From: profileSlug,
+    To: route.agentId,
+    SessionKey: route.sessionKey,
+    AccountId: (route as Record<string, unknown>)["accountId"] as string ?? "default",
+    ChatType: "direct",
+    ConversationLabel: `Hearth / ${profileSlug}`,
+    SenderId: profileSlug,
+    Provider: "hearth-app",
+    Surface: "hearth-app",
+    MessageSid: messageSid,
+    MessageSidFull: messageSid,
+    Timestamp: timestamp,
+    CommandAuthorized: true,
+    OriginatingChannel: "hearth-app",
+    OriginatingTo: profileSlug,
+  });
+
+  await dispatchInboundReplyWithBase({
+    cfg,
     channel: "hearth-app",
-    channelLabel: "Hearth App",
-    accountId: "default",
-    peer: {
-      kind: "direct",
-      id: `app:${profileSlug}:conv:${conversationUuid}`,
+    accountId: (route as Record<string, unknown>)["accountId"] as string ?? "default",
+    route: { agentId: route.agentId, sessionKey: route.sessionKey },
+    storePath,
+    ctxPayload,
+    core: {
+      channel: {
+        session: { recordInboundSession: channelRuntime.session.recordInboundSession },
+        reply: { dispatchReplyWithBufferedBlockDispatcher: channelRuntime.reply.dispatchReplyWithBufferedBlockDispatcher },
+      },
     },
-    senderId: profileSlug,
-    senderAddress: profileSlug,
-    recipientAddress: agentId,
-    conversationLabel: `Hearth / ${profileSlug}`,
-    rawBody: "/stop",
-    commandBody: "/stop",
-    commandAuthorized: true,
-    messageId: messageId ?? `stop-${Date.now()}`,
-    timestamp: Date.now(),
-    originatingChannel: "hearth-app",
-    originatingTo: profileSlug,
     deliver: async () => { /* stop command reply is silent */ },
     onRecordError: (err) => {
       console.error("[hearth-app] stop command record error:", err);
@@ -200,16 +288,16 @@ export function createInboundHandler(
       return true;
     }
 
-    const agentId = event.agentId || account.agentId;
-    console.log(`[hearth-app] dispatch: agent=${agentId} event.agentId=${event.agentId} conversation=${event.conversationId}`);
-    const legacySessionKey = buildHearthSessionKey({
-      agentId,
+    const requestedAgentId = event.agentId || account.agentId;
+    console.log(`[hearth-app] dispatch: agent=${requestedAgentId} event.agentId=${event.agentId} conversation=${event.conversationId}`);
+    const hearthSessionKey = buildHearthSessionKey({
+      agentId: requestedAgentId,
       profileSlug: event.profileSlug,
       conversationUuid: event.conversationUuid,
     });
 
     // Acknowledge immediately — delivery is async
-    sendJson(res, 202, { accepted: true, sessionKey: legacySessionKey });
+    sendJson(res, 202, { accepted: true, sessionKey: hearthSessionKey });
 
     const startedAt = Date.now();
 
@@ -300,32 +388,21 @@ IMPORTANT: Do not send intermediate progress messages like "I'm checking..." or 
       const directiveBlock = directives.length > 0 ? directives.join("\n") + "\n" : "";
 
       if (directives.length > 0) {
-        console.log(`[hearth-app] preset directives: ${directives.join(" ")} agent=${agentId} conversation=${event.conversationId}`);
+        console.log(`[hearth-app] preset directives: ${directives.join(" ")} agent=${requestedAgentId} conversation=${event.conversationId}`);
       }
 
       const bodyForAgent = `${capabilityManifest}\n${directiveBlock}${event.text}`;
       console.log(`[hearth-app] manifest role=${event.userRole ?? 'unknown'} profile=${event.profileSlug}`);
       console.log(`[hearth-app] manifest household: ${(event.householdMembers ?? []).map(m => m.name + ':' + m.slug).join(', ')}`);
 
-      const peer = {
-        kind: "direct" as const,
-        id: `app:${event.profileSlug}:conv:${event.conversationUuid}`,
-      };
-
-      const { route, buildEnvelope } = resolveInboundRouteEnvelopeBuilderWithRuntime({
+      const { route, buildEnvelope } = resolveHearthRoute({
         cfg,
-        channel: "hearth-app",
-        accountId: "default",
-        peer,
-        runtime: channelRuntime as Parameters<typeof resolveInboundRouteEnvelopeBuilderWithRuntime>[0]["runtime"],
+        channelRuntime,
+        profileSlug: event.profileSlug,
+        conversationUuid: event.conversationUuid,
       });
 
-      const sessionKeys = [...new Set([legacySessionKey, route.sessionKey].filter(Boolean))];
-
-      // Register both the legacy Hearth-computed key and the live route session key.
-      // Recent OpenClaw upgrades may normalize route.sessionKey differently, and the
-      // before_tool_call hook looks up ctx.sessionKey from the live route context.
-      registerSession(sessionKeys, event.callbackUrl, event.conversationId);
+      registerSession(route.sessionKey, event.callbackUrl, event.conversationId);
 
       const { storePath, body } = buildEnvelope({
         channel: "Hearth App",
@@ -340,7 +417,7 @@ IMPORTANT: Do not send intermediate progress messages like "I'm checking..." or 
         RawBody: event.text,
         CommandBody: event.text,
         From: event.profileSlug,
-        To: agentId,
+        To: route.agentId,
         SessionKey: route.sessionKey,
         AccountId: (route as Record<string, unknown>)["accountId"] as string ?? "default",
         ChatType: "direct",
@@ -372,7 +449,7 @@ IMPORTANT: Do not send intermediate progress messages like "I'm checking..." or 
           },
         },
         deliver: async (payload) => {
-          unregisterSession(sessionKeys);
+          unregisterSession(route.sessionKey);
           await deliverToCallbackUrl(event, payload, startedAt);
         },
         onRecordError: (err) => {
@@ -380,7 +457,7 @@ IMPORTANT: Do not send intermediate progress messages like "I'm checking..." or 
         },
         onDispatchError: (err, info) => {
           console.error(`[hearth-app] dispatch error (${info.kind}):`, err);
-          unregisterSession(sessionKeys);
+          unregisterSession(route.sessionKey);
           void deliverErrorToCallbackUrl(event, err);
         },
         replyOptions: {
@@ -401,7 +478,7 @@ IMPORTANT: Do not send intermediate progress messages like "I'm checking..." or 
       });
     } catch (err) {
       console.error("[hearth-app] inbound dispatch failed:", err);
-      unregisterSession(legacySessionKey);
+      unregisterSession(hearthSessionKey);
       void deliverErrorToCallbackUrl(event, err);
     }
   };
