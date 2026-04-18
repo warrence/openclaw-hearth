@@ -460,6 +460,10 @@ export class ConversationAssistantExecutionService {
         params.userMessage.channel_message_id ??
         `msg_${params.userMessage.id}`,
       text: params.content.trim(),
+      contextText: await this.buildHearthConversationContext(
+        conversation,
+        params.userMessage.id,
+      ),
       attachments: attachments.length > 0 ? attachments : undefined,
       sentAt: new Date().toISOString(),
       userRole: conversation.user?.role ?? 'member',
@@ -470,6 +474,64 @@ export class ConversationAssistantExecutionService {
         undefined,
       ...this.resolvePresetDirectives(conversation, config),
     };
+  }
+
+  private async buildHearthConversationContext(
+    conversation: ConversationRecord,
+    currentMessageId: number | string,
+  ): Promise<string | undefined> {
+    const messages = await this.repository.listConversationMessages(conversation.id);
+    const entries = messages
+      .filter((message) => String(message.id) !== String(currentMessageId))
+      .filter(
+        (message) =>
+          message.role === 'user' || message.role === 'assistant',
+      )
+      .map((message) => ({
+        role: message.role,
+        content: this.normalizeConversationContextSnippet(message.content),
+      }))
+      .filter((message) => message.content.length > 0);
+
+    if (entries.length === 0) {
+      return undefined;
+    }
+
+    const maxEntries = 12;
+    const maxChars = 6000;
+    const selected = entries.slice(-maxEntries);
+    const rendered: string[] = [];
+    let totalChars = 0;
+
+    for (let index = selected.length - 1; index >= 0; index -= 1) {
+      const entry = selected[index]!;
+      const line = `${entry.role === 'assistant' ? 'Assistant' : 'User'}: ${entry.content}`;
+      if (rendered.length > 0 && totalChars + line.length + 1 > maxChars) {
+        break;
+      }
+      rendered.unshift(line);
+      totalChars += line.length + 1;
+    }
+
+    if (rendered.length === 0) {
+      return undefined;
+    }
+
+    const title = conversation.title?.trim() || 'Untitled chat';
+
+    return [
+      `Conversation continuity for this exact Hearth chat: \"${title}\".`,
+      'Use the prior messages below to continue this same conversation, even if the newest user message is brief or referential.',
+      'Never answer from another chat\'s context.',
+      '',
+      '<hearth-conversation-history>',
+      ...rendered,
+      '</hearth-conversation-history>',
+    ].join('\n');
+  }
+
+  private normalizeConversationContextSnippet(text: string | null | undefined): string {
+    return (text ?? '').replace(/\s+/g, ' ').trim().slice(0, 1200);
   }
 
   private async getHouseholdMembers(): Promise<Array<{ name: string; slug: string }>> {

@@ -2,6 +2,17 @@
 
 All notable changes to Hearth are documented here.
 
+## [1.0.2] - 2026-04-18
+
+### Changed
+- Hardened Hearth conversation routing so each app chat now maps to its own OpenClaw session key instead of falling back to the agent main session.
+- Bumped the web app build version to `0.0.119` for the next PWA rollout.
+
+### Fixed
+- Fixed a trust-breaking bug where opening an older Hearth chat could continue the newest unrelated conversation context.
+- Fixed legacy-chat continuity so ambiguous follow-up messages still continue the correct conversation by carrying recent same-chat history into the Hearth app-channel turn.
+- Kept `/stop` routing aligned with the per-conversation session key path.
+
 ## [1.0.1] - 2026-04-16
 
 ### Added

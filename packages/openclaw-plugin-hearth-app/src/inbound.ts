@@ -391,7 +391,10 @@ IMPORTANT: Do not send intermediate progress messages like "I'm checking..." or 
         console.log(`[hearth-app] preset directives: ${directives.join(" ")} agent=${requestedAgentId} conversation=${event.conversationId}`);
       }
 
-      const bodyForAgent = `${capabilityManifest}\n${directiveBlock}${event.text}`;
+      const contextBlock = event.contextText?.trim()
+        ? `${event.contextText.trim()}\n\n`
+        : "";
+      const bodyForAgent = `${capabilityManifest}\n${directiveBlock}${contextBlock}${event.text}`;
       console.log(`[hearth-app] manifest role=${event.userRole ?? 'unknown'} profile=${event.profileSlug}`);
       console.log(`[hearth-app] manifest household: ${(event.householdMembers ?? []).map(m => m.name + ':' + m.slug).join(', ')}`);
 

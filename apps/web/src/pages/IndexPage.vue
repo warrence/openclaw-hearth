@@ -646,7 +646,7 @@ const currentModelPresetLabel = computed(() => (
   || modelPresetOptions.value[0]?.label
   || 'Fast'
 ))
-const appVersionLabel = process.env.VITE_APP_VERSION || '0.0.118'
+const appVersionLabel = process.env.VITE_APP_VERSION || '0.0.119'
 const { agentDisplayName } = useAppShell()
 const AGENT_DISPLAY_NAME = computed(() => agentDisplayName?.value || t('chatPage.agentFallback'))
 const sendingStatusLabel = computed(() => t('chatPage.status.sending'))

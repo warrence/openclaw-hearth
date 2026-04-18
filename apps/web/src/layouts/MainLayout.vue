@@ -557,7 +557,7 @@ const $q = useQuasar()
 const { t, locale } = useI18n({ useScope: 'global' })
 const route = useRoute()
 const router = useRouter()
-const appVersionLabel = process.env.VITE_APP_VERSION || '0.0.118'
+const appVersionLabel = process.env.VITE_APP_VERSION || '0.0.119'
 
 const currentUser = ref(null)
 const authChecked = ref(false)

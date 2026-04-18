@@ -29,6 +29,8 @@ export interface HearthAppInboundEvent {
 
   // Content
   text: string;
+  /** Additional per-conversation context injected only for the agent, not as the raw user message. */
+  contextText?: string;
   attachments?: HearthAttachment[];
   sentAt: string;
 
