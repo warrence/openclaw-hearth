@@ -71,7 +71,7 @@ export class SettingsRepository {
           created_at,
           updated_at
         FROM model_preset_settings
-        ORDER BY id ASC
+        ORDER BY updated_at DESC NULLS LAST, id DESC
         LIMIT 1
       `,
     );
