@@ -19,7 +19,6 @@ import { SettingsController } from '../src/settings/settings.controller';
 import {
   GatewayConnectionRecord,
   ImageProviderSettingsRecord,
-  ModelPresetSettingsRecord,
   SettingsRepository,
   TtsSettingsRecord,
 } from '../src/settings/settings.repository';
@@ -93,17 +92,6 @@ describe('Nest settings/admin migration slice', () => {
     updated_at: '2026-03-25T01:02:03.000Z',
   };
 
-  const modelRecord: ModelPresetSettingsRecord = {
-    id: 3,
-    fast_model_id: 'openai/gpt-5.4',
-    fast_think_level: 'medium',
-    fast_reasoning_enabled: true,
-    deep_model_id: 'anthropic/claude-sonnet-4-5',
-    deep_think_level: 'high',
-    deep_reasoning_enabled: null,
-    updated_at: '2026-03-25T01:02:03.000Z',
-  };
-
   const gatewayRecord: GatewayConnectionRecord = {
     id: 5,
     name: 'Default',
@@ -129,11 +117,6 @@ describe('Nest settings/admin migration slice', () => {
       getOrCreateImageProviderSettings: jest.fn(async () => imageRecord),
       updateImageProviderSettings: jest.fn(async (_id, updates) => ({
         ...imageRecord,
-        ...updates,
-      })),
-      getOrCreateModelPresetSettings: jest.fn(async () => modelRecord),
-      updateModelPresetSettings: jest.fn(async (_id, updates) => ({
-        ...modelRecord,
         ...updates,
       })),
       findDefaultGatewayConnection: jest.fn(async () => gatewayRecord),
@@ -190,12 +173,37 @@ describe('Nest settings/admin migration slice', () => {
       }),
     };
 
+    const openClawConfigWriter = {
+      get: jest.fn((path: string) => {
+        if (path === 'modelPresets.fast') {
+          return {
+            model: 'openai/gpt-5.4',
+            thinkLevel: 'medium',
+            reasoningEnabled: true,
+          };
+        }
+        if (path === 'modelPresets.deep') {
+          return {
+            model: 'anthropic/claude-sonnet-4-5',
+            thinkLevel: 'high',
+            reasoningEnabled: null,
+          };
+        }
+        if (path === 'agentDisplayName') return undefined;
+        if (path === 'agentSettings.agent') return undefined;
+        if (path === 'reminders.critical') return undefined;
+        return undefined;
+      }),
+      patch: jest.fn(),
+    };
+
     service = new SettingsService(
       repository as unknown as SettingsRepository,
       new LaravelCryptoService(configService as never),
       new OpenClawModelCatalogService(configService as never),
       gatewayHealthService as unknown as OpenClawGatewayHealthService,
       configService as never,
+      openClawConfigWriter as never,
     );
     controller = new SettingsController(service);
     validationPipe = new ValidationPipe({
@@ -292,6 +300,20 @@ describe('Nest settings/admin migration slice', () => {
     expect(settings.presets.fast.model_id).toBe('openai/gpt-5.4');
     expect(updated.presets.fast.reasoning_enabled).toBe(true);
     expect(updated.presets.deep.reasoning_enabled).toBeNull();
+    expect((service as any).openClawConfigWriter.patch).toHaveBeenCalledWith({
+      modelPresets: {
+        fast: {
+          model: 'openai/gpt-5.4',
+          thinkLevel: 'high',
+          reasoningEnabled: true,
+        },
+        deep: {
+          model: 'anthropic/claude-sonnet-4-5',
+          thinkLevel: 'medium',
+          reasoningEnabled: null,
+        },
+      },
+    });
     await expect(
       controller.updateModelPresetSettings({
         presets: {

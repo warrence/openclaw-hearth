@@ -9,10 +9,7 @@ import { LaravelCryptoService } from './laravel-crypto.service';
 import { OpenClawConfigWriterService } from './openclaw-config-writer.service';
 import { OpenClawGatewayHealthError, OpenClawGatewayHealthService } from './openclaw-gateway-health.service';
 import { OpenClawModelCatalogService } from './openclaw-model-catalog.service';
-import {
-  ModelPresetSettingsRecord,
-  SettingsRepository,
-} from './settings.repository';
+import { SettingsRepository } from './settings.repository';
 
 type PresetPayload = {
   model_id: string;
@@ -32,58 +29,37 @@ export class SettingsService {
   ) {}
 
   async getOpenClawModelOptions(): Promise<Record<string, unknown>> {
-    const settings = await this.getModelPresetSettingsRecord();
+    const settings = this.getModelPresetSettingsRecord();
     return this.modelCatalog.optionsPayload(settings);
   }
 
   async getModelPresetSettings(): Promise<Record<string, unknown>> {
-    return this.modelCatalog.settingsPayload(
-      await this.getModelPresetSettingsRecord(),
-    );
+    return this.modelCatalog.settingsPayload(this.getModelPresetSettingsRecord());
   }
 
   async updateModelPresetSettings(
     payload: UpdateModelPresetSettingsDto,
   ): Promise<Record<string, unknown>> {
-    const settings = await this.getModelPresetSettingsRecord();
+    const settings = this.getModelPresetSettingsRecord();
     const fast = this.normalizePresetPayload(payload.presets.fast, settings);
     const deep = this.normalizePresetPayload(payload.presets.deep, settings);
-    const defaults = this.getModelDefaults();
 
-    const updated = await this.repository.updateModelPresetSettings(
-      settings.id,
-      {
-        fast_model_id: fast.model_id,
-        fast_think_level: fast.think_level,
-        fast_reasoning_enabled: fast.reasoning_enabled,
-        deep_model_id: deep.model_id,
-        deep_think_level: deep.think_level,
-        deep_reasoning_enabled: deep.reasoning_enabled,
-      },
-      defaults,
-    );
-
-    // Persist to openclaw.json so the execution service reads from a single source of truth
-    try {
-      this.openClawConfigWriter.patch({
-        modelPresets: {
-          fast: {
-            model: fast.model_id,
-            thinkLevel: fast.think_level ?? null,
-            reasoningEnabled: fast.reasoning_enabled ?? null,
-          },
-          deep: {
-            model: deep.model_id,
-            thinkLevel: deep.think_level ?? null,
-            reasoningEnabled: deep.reasoning_enabled ?? null,
-          },
+    this.openClawConfigWriter.patch({
+      modelPresets: {
+        fast: {
+          model: fast.model_id,
+          thinkLevel: fast.think_level ?? null,
+          reasoningEnabled: fast.reasoning_enabled ?? null,
         },
-      });
-    } catch {
-      // Non-fatal — DB is the primary store, openclaw.json is the runtime cache
-    }
+        deep: {
+          model: deep.model_id,
+          thinkLevel: deep.think_level ?? null,
+          reasoningEnabled: deep.reasoning_enabled ?? null,
+        },
+      },
+    });
 
-    return this.modelCatalog.settingsPayload(updated);
+    return this.modelCatalog.settingsPayload(this.getModelPresetSettingsRecord());
   }
 
   /** Returns just the display name — safe for public/unauthenticated access */
@@ -283,8 +259,37 @@ export class SettingsService {
     });
   }
 
-  private async getModelPresetSettingsRecord(): Promise<ModelPresetSettingsRecord> {
-    return this.repository.getOrCreateModelPresetSettings(this.getModelDefaults());
+  private getModelPresetSettingsRecord() {
+    const defaults = this.getModelDefaults();
+    type HearthPresetEntry = {
+      model?: string;
+      thinkLevel?: string | null;
+      reasoningEnabled?: boolean | null;
+    };
+
+    const fast = this.openClawConfigWriter.get<HearthPresetEntry>('modelPresets.fast');
+    const deep = this.openClawConfigWriter.get<HearthPresetEntry>('modelPresets.deep');
+
+    return {
+      id: 0,
+      fast_model_id:
+        (typeof fast === 'object' && fast?.model?.trim()) || defaults.fastModel,
+      fast_think_level:
+        typeof fast === 'object' ? this.normalizeNullableString(fast?.thinkLevel) : null,
+      fast_reasoning_enabled:
+        typeof fast === 'object' && typeof fast?.reasoningEnabled === 'boolean'
+          ? fast.reasoningEnabled
+          : null,
+      deep_model_id:
+        (typeof deep === 'object' && deep?.model?.trim()) || defaults.deepModel,
+      deep_think_level:
+        typeof deep === 'object' ? this.normalizeNullableString(deep?.thinkLevel) : null,
+      deep_reasoning_enabled:
+        typeof deep === 'object' && typeof deep?.reasoningEnabled === 'boolean'
+          ? deep.reasoningEnabled
+          : null,
+      updated_at: null,
+    };
   }
 
   private normalizePresetPayload(
@@ -293,7 +298,7 @@ export class SettingsService {
       think_level?: string | null;
       reasoning_enabled?: boolean | null;
     },
-    settings: ModelPresetSettingsRecord,
+    settings: ReturnType<SettingsService['getModelPresetSettingsRecord']>,
   ): PresetPayload {
     const modelId = preset.model_id.trim();
     const option = this.modelCatalog.findOption(modelId, settings);
