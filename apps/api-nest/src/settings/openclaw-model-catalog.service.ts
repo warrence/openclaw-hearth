@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { OpenClawConfig } from '../config/openclaw.config';
-import { ModelPresetSettingsRecord } from './settings.repository';
+import { ModelPresetSettingsRecord } from './model-preset-settings.types';
 
 type ModelOption = {
   id: string;

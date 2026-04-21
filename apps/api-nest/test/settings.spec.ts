@@ -60,8 +60,6 @@ describe('Nest settings/admin migration slice', () => {
     updateTtsSettings: jest.Mock;
     getOrCreateImageProviderSettings: jest.Mock;
     updateImageProviderSettings: jest.Mock;
-    getOrCreateModelPresetSettings: jest.Mock;
-    updateModelPresetSettings: jest.Mock;
     findDefaultGatewayConnection: jest.Mock;
     updateGatewayStatus: jest.Mock;
   };

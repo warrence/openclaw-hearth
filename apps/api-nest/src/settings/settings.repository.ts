@@ -2,18 +2,6 @@ import { Injectable } from '@nestjs/common';
 
 import { DatabaseService } from '../database/database.service';
 
-type ModelPresetSettingsRow = {
-  id: number | string;
-  fast_model_id: string | null;
-  fast_think_level: string | null;
-  fast_reasoning_enabled: boolean | null;
-  deep_model_id: string | null;
-  deep_think_level: string | null;
-  deep_reasoning_enabled: boolean | null;
-  created_at: Date | string;
-  updated_at: Date | string | null;
-};
-
 type GatewayConnectionRow = {
   id: number | string;
   name: string;
@@ -25,17 +13,6 @@ type GatewayConnectionRow = {
   is_default: boolean;
   created_at: Date | string;
   updated_at: Date | string;
-};
-
-export type ModelPresetSettingsRecord = {
-  id: number;
-  fast_model_id: string;
-  fast_think_level: string | null;
-  fast_reasoning_enabled: boolean | null;
-  deep_model_id: string;
-  deep_think_level: string | null;
-  deep_reasoning_enabled: boolean | null;
-  updated_at: string | null;
 };
 
 export type GatewayConnectionRecord = {
@@ -54,108 +31,6 @@ export type GatewayConnectionRecord = {
 @Injectable()
 export class SettingsRepository {
   constructor(private readonly databaseService: DatabaseService) {}
-
-  async getOrCreateModelPresetSettings(
-    defaults: { fastModel: string; deepModel: string },
-  ): Promise<ModelPresetSettingsRecord> {
-    const existing = await this.databaseService.query<ModelPresetSettingsRow>(
-      `
-        SELECT
-          id,
-          fast_model_id,
-          fast_think_level,
-          fast_reasoning_enabled,
-          deep_model_id,
-          deep_think_level,
-          deep_reasoning_enabled,
-          created_at,
-          updated_at
-        FROM model_preset_settings
-        ORDER BY updated_at DESC NULLS LAST, id DESC
-        LIMIT 1
-      `,
-    );
-
-    const row = existing.rows[0];
-    if (row) {
-      return this.mapModelPresetSettingsRow(row, defaults);
-    }
-
-    const inserted = await this.databaseService.query<ModelPresetSettingsRow>(
-      `
-        INSERT INTO model_preset_settings (
-          fast_model_id,
-          deep_model_id,
-          created_at,
-          updated_at
-        )
-        VALUES ($1, $2, NOW(), NOW())
-        RETURNING
-          id,
-          fast_model_id,
-          fast_think_level,
-          fast_reasoning_enabled,
-          deep_model_id,
-          deep_think_level,
-          deep_reasoning_enabled,
-          created_at,
-          updated_at
-      `,
-      [defaults.fastModel, defaults.deepModel],
-    );
-
-    return this.mapModelPresetSettingsRow(inserted.rows[0]!, defaults);
-  }
-
-  async updateModelPresetSettings(
-    recordId: number,
-    updates: Pick<
-      ModelPresetSettingsRecord,
-      | 'fast_model_id'
-      | 'fast_think_level'
-      | 'fast_reasoning_enabled'
-      | 'deep_model_id'
-      | 'deep_think_level'
-      | 'deep_reasoning_enabled'
-    >,
-    defaults: { fastModel: string; deepModel: string },
-  ): Promise<ModelPresetSettingsRecord> {
-    const result = await this.databaseService.query<ModelPresetSettingsRow>(
-      `
-        UPDATE model_preset_settings
-        SET
-          fast_model_id = $2,
-          fast_think_level = $3,
-          fast_reasoning_enabled = $4,
-          deep_model_id = $5,
-          deep_think_level = $6,
-          deep_reasoning_enabled = $7,
-          updated_at = NOW()
-        WHERE id = $1
-        RETURNING
-          id,
-          fast_model_id,
-          fast_think_level,
-          fast_reasoning_enabled,
-          deep_model_id,
-          deep_think_level,
-          deep_reasoning_enabled,
-          created_at,
-          updated_at
-      `,
-      [
-        recordId,
-        updates.fast_model_id,
-        updates.fast_think_level,
-        updates.fast_reasoning_enabled,
-        updates.deep_model_id,
-        updates.deep_think_level,
-        updates.deep_reasoning_enabled,
-      ],
-    );
-
-    return this.mapModelPresetSettingsRow(result.rows[0]!, defaults);
-  }
 
   async findDefaultGatewayConnection(): Promise<GatewayConnectionRecord | null> {
     const result = await this.databaseService.query<GatewayConnectionRow>(
@@ -240,22 +115,6 @@ export class SettingsRepository {
     );
 
     return this.mapGatewayConnectionRow(result.rows[0]!);
-  }
-
-  private mapModelPresetSettingsRow(
-    row: ModelPresetSettingsRow,
-    defaults: { fastModel: string; deepModel: string },
-  ): ModelPresetSettingsRecord {
-    return {
-      id: Number(row.id),
-      fast_model_id: row.fast_model_id ?? defaults.fastModel,
-      fast_think_level: row.fast_think_level,
-      fast_reasoning_enabled: row.fast_reasoning_enabled,
-      deep_model_id: row.deep_model_id ?? defaults.deepModel,
-      deep_think_level: row.deep_think_level,
-      deep_reasoning_enabled: row.deep_reasoning_enabled,
-      updated_at: this.toIsoString(row.updated_at),
-    };
   }
 
   private mapGatewayConnectionRow(
