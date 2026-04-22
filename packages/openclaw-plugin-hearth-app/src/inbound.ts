@@ -11,7 +11,7 @@ import type { OpenClawConfig, PluginRuntime } from "openclaw/plugin-sdk/core";
 import { buildHearthPeerId, buildHearthSessionKey } from "./session-key.js";
 import { deliverToCallbackUrl, deliverErrorToCallbackUrl, postDeltaToCallbackUrl } from "./outbound.js";
 import { registerSession, unregisterSession } from "./session-registry.js";
-import type { HearthAppInboundEvent, HearthAttachment, HearthAppResolvedAccount } from "./types.js";
+import type { HearthAppInboundEvent, HearthAttachment, HearthAppResolvedAccount, HearthLinkedResource } from "./types.js";
 
 function validateToken(received: string, expected: string): boolean {
   if (!expected) return false;
@@ -246,6 +246,128 @@ async function stageImageAttachments(
   return { paths, types };
 }
 
+/**
+ * Build the linked Google resources section of the capability manifest.
+ * Tells the agent what Google files are attached and how to read them using
+ * Hearth's internal API (no OAuth token is ever exposed to the model).
+ */
+function buildGoogleResourcesManifest(event: HearthAppInboundEvent): string {
+  const resources = event.linkedResources ?? [];
+  if (resources.length === 0) return "";
+
+  const nestBase = (event.hearthNestBaseUrl ?? "http://127.0.0.1:3001").replace(/\/$/, "");
+  const token = event.token ?? "";
+
+  const resourceLines = resources
+    .map((r: HearthLinkedResource) => {
+      const typeLabel = r.resource_type === "sheet" ? "Google Sheet" : "Google Doc";
+      return `  - [resource_id=${r.id}] "${r.title}" (${typeLabel})`;
+    })
+    .join("\n");
+
+  const docResources = resources.filter((r: HearthLinkedResource) => r.resource_type === "doc");
+  const sheetResources = resources.filter((r: HearthLinkedResource) => r.resource_type === "sheet");
+
+  const exampleDocId = docResources[0]?.id ?? "<resource_id>";
+  const exampleSheetId = sheetResources[0]?.id ?? "<resource_id>";
+  const convId = event.conversationId;
+
+  const listCmd = `curl -s -X POST ${nestBase}/api/internal/google/resources/list \\
+  -H "Content-Type: application/json" \\
+  -H "X-Hearth-Internal-Token: ${token}" \\
+  -d '{"conversation_id":${convId}}'`;
+
+  const readDocCmd = docResources.length > 0
+    ? `curl -s -X POST ${nestBase}/api/internal/google/doc/read \\
+  -H "Content-Type: application/json" \\
+  -H "X-Hearth-Internal-Token: ${token}" \\
+  -d '{"conversation_id":${convId},"resource_id":${exampleDocId}}'`
+    : null;
+
+  const appendDocCmd = docResources.length > 0
+    ? `curl -s -X POST ${nestBase}/api/internal/google/doc/append \\
+  -H "Content-Type: application/json" \\
+  -H "X-Hearth-Internal-Token: ${token}" \\
+  -d '{"conversation_id":${convId},"resource_id":${exampleDocId},"append_text":"\\nAction items:\\n- ..."}'`
+    : null;
+
+  const readSheetCmd = sheetResources.length > 0
+    ? `curl -s -X POST ${nestBase}/api/internal/google/sheet/read \\
+  -H "Content-Type: application/json" \\
+  -H "X-Hearth-Internal-Token: ${token}" \\
+  -d '{"conversation_id":${convId},"resource_id":${exampleSheetId}}'`
+    : null;
+
+  const writeSheetRangeCmd = sheetResources.length > 0
+    ? `curl -s -X POST ${nestBase}/api/internal/google/sheet/write-range \\
+  -H "Content-Type: application/json" \\
+  -H "X-Hearth-Internal-Token: ${token}" \\
+  -d '{"conversation_id":${convId},"resource_id":${exampleSheetId},"range":"Sheet1!A2:C3","values":[{"values":["Task","Owner","Status"]},{"values":["Buy milk","Aeris","Done"]}]}'`
+    : null;
+
+  const appendSheetRowsCmd = sheetResources.length > 0
+    ? `curl -s -X POST ${nestBase}/api/internal/google/sheet/append-rows \\
+  -H "Content-Type: application/json" \\
+  -H "X-Hearth-Internal-Token: ${token}" \\
+  -d '{"conversation_id":${convId},"resource_id":${exampleSheetId},"sheet_name":"Sheet1","rows":[{"values":["2026-04-19","Groceries","84.50"]}]}'`
+    : null;
+
+  const sections: string[] = [
+    `LINKED GOOGLE RESOURCES (${resources.length} file${resources.length === 1 ? "" : "s"} attached to this conversation):`,
+    resourceLines,
+    "",
+    "GOOGLE TOOLS — use bash to call these Hearth internal endpoints:",
+    "• List all linked resources:",
+    "  " + listCmd.split("\n").join("\n  "),
+  ];
+
+  if (readDocCmd) {
+    sections.push(
+      `• Read a Google Doc (replace resource_id as needed):`,
+      "  " + readDocCmd.split("\n").join("\n  "),
+    );
+  }
+
+  if (appendDocCmd) {
+    sections.push(
+      `• Append plain text to a Google Doc (safe for notes, logs, action items):`,
+      "  " + appendDocCmd.split("\n").join("\n  "),
+    );
+  }
+
+  if (readSheetCmd) {
+    sections.push(
+      `• Read a Google Sheet (replace resource_id as needed; add "max_rows":N to limit rows):`,
+      "  " + readSheetCmd.split("\n").join("\n  "),
+    );
+  }
+
+  if (writeSheetRangeCmd) {
+    sections.push(
+      `• Write a specific Google Sheet range (best for explicit cells you want to update in place):`,
+      "  " + writeSheetRangeCmd.split("\n").join("\n  "),
+    );
+  }
+
+  if (appendSheetRowsCmd) {
+    sections.push(
+      `• Append rows to a Google Sheet tab (best for logs, ledgers, or adding records without overwriting):`,
+      "  " + appendSheetRowsCmd.split("\n").join("\n  "),
+    );
+  }
+
+  sections.push(
+    "",
+    "When the user asks about a linked file, call the appropriate read or write tool first.",
+    "Use append for adding new notes or rows. Use write-range only when the target cells are explicit and scoped.",
+    "Do NOT make up content and do NOT do broad destructive rewrites.",
+    "Large documents are automatically truncated at 50,000 characters; sheets at 200 rows per tab.",
+    "",
+  );
+
+  return sections.join("\n") + "\n";
+}
+
 type ChannelRuntime = NonNullable<PluginRuntime["channel"]>;
 
 export function createInboundHandler(
@@ -283,7 +405,10 @@ export function createInboundHandler(
       return true;
     }
 
-    if (!event.text || !event.profileSlug || !event.conversationUuid || !event.callbackUrl) {
+    const hasText = typeof event.text === "string" && event.text.trim().length > 0;
+    const hasAttachments = Array.isArray(event.attachments) && event.attachments.length > 0;
+
+    if ((!hasText && !hasAttachments) || !event.profileSlug || !event.conversationUuid || !event.callbackUrl) {
       sendJson(res, 400, { error: "Missing required fields" });
       return true;
     }
@@ -376,7 +501,7 @@ REMINDER CANCELLATION: When user asks to cancel/delete a reminder, append:
 Use the ID from the pending reminders list above.
 ${event.userRole === 'owner' ? 'As owner, you can cancel any reminder.' : 'You can only cancel your own reminders.'}
 
-IMPORTANT: Do not send intermediate progress messages like "I'm checking..." or "Let me look that up..." — complete your research/tool calls first, then send ONE final reply with the complete answer. Partial messages get cut off.
+${buildGoogleResourcesManifest(event)}IMPORTANT: Do not send intermediate progress messages like "I'm checking..." or "Let me look that up..." — complete your research/tool calls first, then send ONE final reply with the complete answer. Partial messages get cut off.
 
 `;
 
@@ -453,7 +578,7 @@ IMPORTANT: Do not send intermediate progress messages like "I'm checking..." or 
         },
         deliver: async (payload) => {
           unregisterSession(route.sessionKey);
-          await deliverToCallbackUrl(event, payload, startedAt);
+          await deliverToCallbackUrl(event, payload, startedAt, route.sessionKey);
         },
         onRecordError: (err) => {
           console.error("[hearth-app] session record error:", err);
