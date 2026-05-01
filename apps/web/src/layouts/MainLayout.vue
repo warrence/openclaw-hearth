@@ -574,6 +574,51 @@ const agentDisplayName = ref('Assistant')
 const agentDefaultName = ref('Assistant')  // OpenClaw's agent name — used as placeholder
 const agentNameInput = ref('')
 let eventSource = null
+let openclawStatusRetryTimer = null
+
+function normalizeOpenClawHealthStatus(health) {
+  if (health?.openclaw?.status === 'not_configured') {
+    return 'not_configured'
+  }
+
+  if (health?.openclaw?.status === 'disconnected') {
+    return 'disconnected'
+  }
+
+  if (health?.openclaw?.status === 'no_model') {
+    return 'no_model'
+  }
+
+  return 'connected'
+}
+
+function clearOpenClawStatusRetryTimer() {
+  if (openclawStatusRetryTimer !== null) {
+    window.clearTimeout(openclawStatusRetryTimer)
+    openclawStatusRetryTimer = null
+  }
+}
+
+async function refreshOpenClawStatus({ verifyBeforeShowing = false } = {}) {
+  try {
+    const nextStatus = normalizeOpenClawHealthStatus(await getHealthStatus())
+
+    if (nextStatus === 'connected' || !verifyBeforeShowing) {
+      clearOpenClawStatusRetryTimer()
+      openclawStatus.value = nextStatus
+      return
+    }
+
+    openclawStatus.value = 'unknown'
+    clearOpenClawStatusRetryTimer()
+    openclawStatusRetryTimer = window.setTimeout(() => {
+      refreshOpenClawStatus({ verifyBeforeShowing: false })
+    }, 5000)
+  } catch {
+    clearOpenClawStatusRetryTimer()
+    openclawStatus.value = 'unknown'
+  }
+}
 
 function connectEventStream(userId) {
   if (eventSource) { eventSource.close(); eventSource = null }
@@ -844,6 +889,7 @@ onBeforeUnmount(() => {
   stopUpdateCheckTimer()
   stopActiveConversationRefreshTimer()
   clearSidebarSearchTimer()
+  clearOpenClawStatusRetryTimer()
   if (presenceSyncTimer !== null) {
     window.clearTimeout(presenceSyncTimer)
     presenceSyncTimer = null
@@ -999,20 +1045,9 @@ async function bootApp() {
   }, 5000)
 
   try {
-    // Fire-and-forget: health check runs in background — don't block boot
-    getHealthStatus().then((health) => {
-      if (health?.openclaw?.status === 'not_configured') {
-        openclawStatus.value = 'not_configured'
-      } else if (health?.openclaw?.status === 'disconnected') {
-        openclawStatus.value = 'disconnected'
-      } else if (health?.openclaw?.status === 'no_model') {
-        openclawStatus.value = 'no_model'
-      } else {
-        openclawStatus.value = 'connected'
-      }
-    }).catch(() => {
-      openclawStatus.value = 'unknown'
-    })
+    // Fire-and-forget: health check runs in background — don't block boot.
+    // Verify once before showing a scary banner so brief API restarts don't stick.
+    refreshOpenClawStatus({ verifyBeforeShowing: true })
 
     // Critical boot calls in parallel — these are fast
     const [displayInfoResult, , authResult] = await Promise.allSettled([

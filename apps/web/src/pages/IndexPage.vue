@@ -2067,12 +2067,37 @@ function messageAttachments(message) {
   return Array.isArray(message?.attachments) ? message.attachments : []
 }
 
+function normalizedAttachmentExtension(attachment) {
+  return String(attachment?.extension || fileExtension(attachment?.name || '') || '')
+    .toLowerCase()
+    .split(/[?#]/)[0]
+}
+
+function normalizedAttachmentMime(attachment) {
+  return String(attachment?.mime_type || attachment?.mimeType || '').toLowerCase()
+}
+
+function isPdfAttachment(attachment) {
+  return normalizedAttachmentMime(attachment) === 'application/pdf' || normalizedAttachmentExtension(attachment) === 'pdf'
+}
+
+function isRenderableImageAttachment(attachment) {
+  return Boolean(
+    attachment?.url
+    && !isPdfAttachment(attachment)
+    && (
+      normalizedAttachmentMime(attachment).startsWith('image/')
+      || attachment?.category === 'image'
+    ),
+  )
+}
+
 function imageAttachments(message) {
-  return messageAttachments(message).filter((attachment) => attachment.category === 'image' && attachment.url)
+  return messageAttachments(message).filter(isRenderableImageAttachment)
 }
 
 function fileAttachments(message) {
-  return messageAttachments(message).filter((attachment) => attachment.category !== 'image' && attachment.url)
+  return messageAttachments(message).filter((attachment) => attachment.url && !isRenderableImageAttachment(attachment))
 }
 
 function openAttachmentLightbox(attachment) {
@@ -2549,11 +2574,11 @@ function markLightboxGestureMoved(deltaX, deltaY) {
 }
 
 function attachmentIcon(attachment) {
-  if (attachment.category === 'image') {
+  if (isRenderableImageAttachment(attachment)) {
     return 'image'
   }
 
-  if (attachment.category === 'pdf') {
+  if (attachment.category === 'pdf' || isPdfAttachment(attachment)) {
     return 'picture_as_pdf'
   }
 
@@ -2810,7 +2835,7 @@ function openChatFile(file) {
     return
   }
 
-  if (file.category === 'image') {
+  if (isRenderableImageAttachment(file)) {
     openAttachmentLightbox(file)
     return
   }
@@ -2885,7 +2910,7 @@ function detectAttachmentCategory(mimeType, name) {
 }
 
 function fileExtension(name) {
-  const normalized = String(name || '')
+  const normalized = String(name || '').split(/[?#]/)[0]
   const lastDot = normalized.lastIndexOf('.')
 
   if (lastDot === -1) {

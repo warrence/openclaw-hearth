@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { copyFile, mkdir, readFile } from 'node:fs/promises';
 import { basename, extname, join, resolve } from 'node:path';
 
-import { AttachmentPayload } from '../attachments/attachments.types';
+import { AttachmentCategory, AttachmentPayload } from '../attachments/attachments.types';
 import { OpenClawConfig } from '../config/openclaw.config';
 import {
   ConversationRecord,
@@ -1002,13 +1002,14 @@ export class ConversationAssistantExecutionService {
         // URL-based media: include as-is without file copy
         const ext = extname(rawPath).replace(/^\./, '').toLowerCase() || 'png';
         const mime = this.mimeFromExtension(ext);
+        const category = this.categoryFromMimeAndExtension(mime, ext);
         attachments.push({
           id: randomUUID(),
           name: basename(rawPath) || `generated-${Date.now()}.${ext}`,
           mime_type: mime,
           size_bytes: 0,
           extension: ext,
-          category: 'image',
+          category,
           uploaded_at: new Date().toISOString(),
           url: rawPath,
           internal_url: rawPath,
@@ -1024,6 +1025,7 @@ export class ConversationAssistantExecutionService {
       try {
         const ext = extname(resolvedPath).replace(/^\./, '').toLowerCase() || 'png';
         const mime = this.mimeFromExtension(ext);
+        const category = this.categoryFromMimeAndExtension(mime, ext);
         const destDir = join(storageRoot, 'attachments', 'messages', String(conversationId));
         const destFile = `${randomUUID()}-${basename(resolvedPath)}`;
         const destPath = join(destDir, destFile);
@@ -1038,7 +1040,7 @@ export class ConversationAssistantExecutionService {
           mime_type: mime,
           size_bytes: 0,
           extension: ext,
-          category: 'image',
+          category,
           uploaded_at: new Date().toISOString(),
           url: `${publicBaseUrl}/${storagePath}`,
           internal_url: `${internalBaseUrl}/${storagePath}`,
@@ -1060,14 +1062,49 @@ export class ConversationAssistantExecutionService {
   }
 
   private mimeFromExtension(ext: string): string {
+    const normalizedExtension = this.normalizeExtension(ext);
     const map: Record<string, string> = {
       jpg: 'image/jpeg',
       jpeg: 'image/jpeg',
       png: 'image/png',
       gif: 'image/gif',
       webp: 'image/webp',
+      pdf: 'application/pdf',
+      txt: 'text/plain',
+      md: 'text/markdown',
+      csv: 'text/csv',
+      json: 'application/json',
     };
-    return map[ext] ?? 'image/png';
+    return map[normalizedExtension] ?? 'application/octet-stream';
+  }
+
+  private normalizeExtension(extension: string): string {
+    return extension.toLowerCase().replace(/^\./, '').split(/[?#]/)[0] ?? '';
+  }
+
+  private categoryFromMimeAndExtension(
+    mimeType: string,
+    extension: string,
+  ): AttachmentCategory {
+    const normalizedMime = mimeType.toLowerCase();
+    const normalizedExtension = this.normalizeExtension(extension);
+
+    if (normalizedMime.startsWith('image/')) {
+      return 'image';
+    }
+
+    if (normalizedMime === 'application/pdf' || normalizedExtension === 'pdf') {
+      return 'pdf';
+    }
+
+    if (
+      normalizedMime.startsWith('text/') ||
+      ['txt', 'md', 'markdown', 'json', 'csv'].includes(normalizedExtension)
+    ) {
+      return 'text';
+    }
+
+    return 'file';
   }
 
   /**
@@ -1099,13 +1136,14 @@ export class ConversationAssistantExecutionService {
           // Remote URL — reference directly without copying
           const ext = extname(rawUrl).replace(/^\./, '').toLowerCase() || 'png';
           const mime = this.mimeFromExtension(ext);
+          const category = this.categoryFromMimeAndExtension(mime, ext);
           results.push({
             id: randomUUID(),
             name: basename(rawUrl) || `generated-image.${ext}`,
             mime_type: mime,
             size_bytes: 0,
             extension: ext,
-            category: 'image',
+            category,
             uploaded_at: new Date().toISOString(),
             url: rawUrl,
             internal_url: rawUrl,
@@ -1122,6 +1160,7 @@ export class ConversationAssistantExecutionService {
 
           const ext = extname(absoluteSrc).replace(/^\./, '').toLowerCase() || 'png';
           const mime = this.mimeFromExtension(ext);
+          const category = this.categoryFromMimeAndExtension(mime, ext);
           const destDir = join(storageRoot, 'attachments', 'messages', String(conversationId));
           const destFile = `${randomUUID()}-generated-image.${ext}`;
           const destPath = join(destDir, destFile);
@@ -1138,7 +1177,7 @@ export class ConversationAssistantExecutionService {
             mime_type: mime,
             size_bytes: size,
             extension: ext,
-            category: 'image',
+            category,
             uploaded_at: new Date().toISOString(),
             url: `${publicBaseUrl}/${storagePath}`,
             internal_url: `${internalBaseUrl}/${storagePath}`,
